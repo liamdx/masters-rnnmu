@@ -43,11 +43,10 @@ def runNetwork(x, y, sequence_length,_learning_rate, _batch_size, _epochs):
     
     model = Sequential()
     model.add(LSTM(units=4, input_shape=(sequence_length, num_features), return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(LSTM(256))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
+    model.add(LSTM(512))
     model.add(Dense(256, activation="relu"))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dense(128, activation="sigmoid"))
     model.add(Dense(4, activation='sigmoid'))
     
     model_optimizer = adam(lr=_learning_rate)
