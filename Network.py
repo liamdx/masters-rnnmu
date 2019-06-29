@@ -13,14 +13,6 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
 
-# training params
-
-
-# network params
-num_input = 128
-timesteps = 960
-num_hidden = 128
-num_classes = 12
 
 def genNetworkData(processedData, processedLabels):
     # Should we one-hot encode the labels ?
@@ -42,11 +34,12 @@ def runNetwork(x, y, sequence_length,_learning_rate, _batch_size, _epochs):
     num_features = 4
     
     model = Sequential()
-    model.add(LSTM(units=4, input_shape=(sequence_length, num_features), return_sequences=True))
-    model.add(Dropout(0.3))
-    model.add(LSTM(512))
-    model.add(Dense(256, activation="relu"))
-    model.add(Dense(128, activation="sigmoid"))
+    model.add(LSTM(units=3, input_shape=(sequence_length, num_features), return_sequences=True))
+    model.add(Dropout(0.1))
+    model.add(LSTM(128))
+    model.add(Dropout(0.1))
+    model.add(Dense(64, activation="relu"))
+    model.add(Dense(32, activation="sigmoid"))
     model.add(Dense(4, activation='sigmoid'))
     
     model_optimizer = adam(lr=_learning_rate)
@@ -63,7 +56,7 @@ def runNetwork(x, y, sequence_length,_learning_rate, _batch_size, _epochs):
         batch_size=_batch_size
     )
     
-    return model
+    return model, trainX, trainY, testX, testY
 
     # Final evaluation of the model
     # evaluate(model, trainX, trainY, testX, testY)
