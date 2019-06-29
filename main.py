@@ -1,4 +1,3 @@
-# from DataGenerator import *
 from DataGen import *
 from DataAnalysis import *
 from Network import *
@@ -24,30 +23,26 @@ processedData, processedLabels = processKerasData(data, timeScalars, sequence_le
 del data
 
 # Load data in to spyder
-
-
 # RE RUNS RUN Me ONLY
 model, trainX, trainY, testX, testY = runNetwork(
     processedData, processedLabels, sequence_length, learning_rate, batch_size, epochs
 )
 
 tempData = trainX[4:10]
-# tempData = tempData.tolist()
-
-# final notes which will be sent to a midi file
 preds = []
 
 for i in range(2):
+    # sample shape = (1,15,4)
     sample = tempData[0:1]
+    print("Sample Shape = ")
+    print(sample.shape)
+    # pred shape = (1,4)
     pred = model.predict(sample)
-    # sample = shift(sample, 1, cval=np.NaN)
+    # shift the array down so that the last row = 0,0,0,0
+    # then replace the null values with pred
     sample[0, len(sample) - 1] = pred[0]
     tempData[0] = sample[0]
     preds.append(pred)
-#    notes.append(pred)
-#    sample.pop(0)
-#    sample.append(pred)
+
 convertDataToMidi(preds, timeScalars)
-# genNetworkData(imageFilepaths, labels)
-# processedMidi = getMidiDataFromImages(imageFilepaths)
-# dumpMidi(processedMidi)
+
