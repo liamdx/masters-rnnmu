@@ -19,15 +19,17 @@ midi_data, key_distributions = loadMidiData(filepaths[0:20])
 # image_filepaths = getImageFilepaths("debug")
 
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
-del(midi_data)
+del midi_data
 processedData, processedLabels = processKerasData(data, timeScalars, sequence_length)
-del(data)
+del data
 
 # Load data in to spyder
 
 
 # RE RUNS RUN Me ONLY
-model, trainX, trainY, testX, testY = runNetwork(processedData, processedLabels, sequence_length, learning_rate, batch_size, epochs)
+model, trainX, trainY, testX, testY = runNetwork(
+    processedData, processedLabels, sequence_length, learning_rate, batch_size, epochs
+)
 
 tempData = trainX[4:10]
 # tempData = tempData.tolist()
@@ -45,7 +47,7 @@ for i in range(2):
 #    notes.append(pred)
 #    sample.pop(0)
 #    sample.append(pred)
-convertDataToMidi(preds, timeScalars)  
+convertDataToMidi(preds, timeScalars)
 # genNetworkData(imageFilepaths, labels)
 # processedMidi = getMidiDataFromImages(imageFilepaths)
 # dumpMidi(processedMidi)
