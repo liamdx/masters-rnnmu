@@ -6,9 +6,9 @@ from util.tensorflow_utils import *
 import copy
 
 learning_rate = 0.0003
-batch_size = 32
+batch_size = 64
 epochs = 3
-sequence_length = 6
+sequence_length = 9
 
 # gen midi
 filepaths = getCleanedFilePaths("maestro")
