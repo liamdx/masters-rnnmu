@@ -109,7 +109,7 @@ def getKerasData(mididict, key_distributions):
         notes = []
         # not being used right now
         binaryKeyVector = getBinaryKeyVector(key_distributions[k])
-        lastNote = None
+        lastNote = raw_notes[0]
         for note in raw_notes:
             noteTime = note.start - lastNote.start
             noteDuration = note.end - note.start
@@ -253,15 +253,17 @@ def convertDataToMidi(notes, timeScalars):
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
-
+    lastNoteStart = 0
     for n in notes:
         # remap output of neural network / normalise notes
         pitch = np.uint8(remap(n[0][3], 0, 1, timeScalars[4], timeScalars[5]))
         velocity = np.uint8(remap(n[0][2], 0, 1, 0, 127))
-        start = remap(n[0][0], 0, 1, timeScalars[0], timeScalars[1])
+        offset = remap(n[0][0], 0, 1, timeScalars[0], timeScalars[1])
         duration = remap(n[0][1], 0, 1, timeScalars[2], timeScalars[3])
+        start = lastNoteStart + offset
         note = pretty_midi.Note(velocity, pitch, start, start + duration)
         inst.notes.append(note)
+        lastNoteStart = start
 
     mid.instruments.append(inst)
     mid.write("debug/debug.mid")

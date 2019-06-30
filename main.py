@@ -5,14 +5,14 @@ from NetworkRun import *
 from util.tensorflow_utils import *
 import copy
 
-learning_rate = 0.0005
-batch_size = 64
+learning_rate = 0.0003
+batch_size = 32
 epochs = 3
-sequence_length = 9
+sequence_length = 6
 
 # gen midi
 filepaths = getCleanedFilePaths("maestro")
-midi_data, key_distributions = loadMidiData(filepaths[0:100])
+midi_data, key_distributions = loadMidiData(filepaths[0:10])
 
 # genImagesFromMidiData(midi_data)
 # read it back in
