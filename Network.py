@@ -12,12 +12,12 @@ from util.tensorflow_utils import *
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
+import datetime
+import json
+
 
 
 def genNetworkData(processedData, processedLabels):
-    # Should we one-hot encode the labels ?
-    # lb = MultiLabelBinarizer()
-    # labels_encoded = lb.fit_transform(labels)
     trainX, testX, trainY, testY = train_test_split(
         np.array(processedData),
         np.array(processedLabels),
@@ -45,12 +45,15 @@ def runNetwork(x, y, sequence_length, _learning_rate, _batch_size, _epochs):
     model = Sequential()
     model.add(
         LSTM(
-            units=3, input_shape=(sequence_length, num_features), return_sequences=True
+            units=8, input_shape=(sequence_length, num_features), return_sequences=True
         )
     )
     model.add(Dropout(0.1))
+    model.add(LSTM(256, return_sequences=True))
+    model.add(Dropout(0.1))
     model.add(LSTM(128))
     model.add(Dropout(0.1))
+    model.add(Dense(128, activation="relu"))
     model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="sigmoid"))
     model.add(Dense(4, activation="sigmoid"))
@@ -70,6 +73,11 @@ def runNetwork(x, y, sequence_length, _learning_rate, _batch_size, _epochs):
         epochs=_epochs,
         batch_size=_batch_size,
     )
+    
+    directory = "debug/models/"
+    filename = 'test-{date:%Y-%m-%d-%H-%M-%S}'.format( date=datetime.datetime.now())
+    
+    model.save(directory + filename + ".h5")
 
     return model, trainX, trainY, testX, testY
 

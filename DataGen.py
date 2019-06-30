@@ -109,8 +109,9 @@ def getKerasData(mididict, key_distributions):
         notes = []
         # not being used right now
         binaryKeyVector = getBinaryKeyVector(key_distributions[k])
+        lastNote = None
         for note in raw_notes:
-            noteTime = note.start
+            noteTime = note.start - lastNote.start
             noteDuration = note.end - note.start
             noteVelocity = note.velocity
             notePitch = note.pitch
@@ -118,6 +119,9 @@ def getKerasData(mididict, key_distributions):
             # 1st Start Time 2nd Duration of Note, 3rd Note Velocity, 4th Note Pitch
             notes.append((noteTime, noteDuration, noteVelocity, notePitch))
             # for normalisation in neural network
+            
+            lastNote = note
+            
             if noteTime >= latestNoteTime:
                 latestNoteTime = noteTime
             elif noteTime <= earliestNoteTime:
