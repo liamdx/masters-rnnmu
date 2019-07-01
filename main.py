@@ -44,7 +44,7 @@ model = runNetwork(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "test-2019-06-30-21-51-03"
+loaded_model_name = "test-2019-07-02-00-01-28"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 # take some test data
