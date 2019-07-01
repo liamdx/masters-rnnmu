@@ -4,25 +4,15 @@ from os import listdir
 from os.path import isfile, join
 import random
 import string
-from difflib import SequenceMatcher
+
 import numpy as np
 import scipy.misc as smp
 from matplotlib import pyplot as plt
 from DataAnalysis import *
+from util.rnnmu_utils import similar
 
 
-def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
-    OldRange = OldMax - OldMin
-    if OldRange == 0:
-        NewValue = NewMin
-    else:
-        NewRange = NewMax - NewMin
-        NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
-    return NewValue
 
-
-def similar(a, b):
-    return SequenceMatcher(None, a, b).ratio()
 
 
 def getCleanedFilePaths(dataset):
@@ -65,7 +55,7 @@ def loadMidiData(cleanfiles):
     key_distributions = {}
     counter = 0
     for c in cleanfiles:
-        if counter % 16 == 0:
+        if counter % 8 == 0:
             percentage = (counter / len(cleanfiles)) * 100
             print("Processing Files : %f percent" % percentage)
         try:
@@ -249,7 +239,17 @@ def getBinaryKeyVector(key_distribution):
     return binaryVector
 
 
-def convertDataToMidi(notes, timeScalars):
+def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
+    OldRange = OldMax - OldMin
+    if OldRange == 0:
+        NewValue = NewMin
+    else:
+        NewRange = NewMax - NewMin
+        NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+    return NewValue
+
+
+def convertDataToMidi(notes, timeScalars, model_name):
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
@@ -266,4 +266,21 @@ def convertDataToMidi(notes, timeScalars):
         lastNoteStart = start
 
     mid.instruments.append(inst)
-    mid.write("debug/debug.mid")
+    mid.write(getMidiRunName(model_name))
+
+
+def getMidiRunName(model_name):
+    directory = "debug/midi/" + model_name
+    
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        
+    files = [f.path for f in os.scandir(directory)]
+    existingFiles = len(files)
+    if(existingFiles == 0):
+        ret = directory + "/1.mid"
+        return ret
+    else:
+        ret = directory + "/" + str(existingFiles + 1) + ".mid"
+        return ret
+    

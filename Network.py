@@ -37,22 +37,21 @@ def evaluate(model, train_x, train_y, test_x, test_y):
     )
 
 
-def runNetwork(x, y, sequence_length, _learning_rate, _batch_size, _epochs):
-    trainX, testX, trainY, testY = genNetworkData(x, y)
+def runNetwork(trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs):
 
     num_features = 4
 
     model = Sequential()
     model.add(
         LSTM(
-            units=8, input_shape=(sequence_length, num_features), return_sequences=True
+            units=32, input_shape=(sequence_length, num_features), return_sequences=True
         )
     )
-    model.add(Dropout(0.3))
-    model.add(LSTM(256, return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(LSTM(128, return_sequences=True))
     model.add(Dropout(0.2))
     model.add(LSTM(128))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(Dense(128, activation="relu"))
     model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="sigmoid"))

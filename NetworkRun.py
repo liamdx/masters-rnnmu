@@ -1,8 +1,8 @@
 import tensorflow as tf
-
 import keras
 from keras.models import load_model
 import copy
+import numpy as np
 
 def loadModel(modelName):
     directory = "debug/models/"
@@ -21,3 +21,5 @@ def startNetworkRun(model, sequence, sequence_length, notesToProduce):
         sample = np.roll(sample, -1, axis=1)
         sample[0,len(sample[0]) - 1,] = pred[0]
         preds.append(pred)
+        
+    return preds
