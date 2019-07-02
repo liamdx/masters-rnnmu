@@ -16,7 +16,6 @@ import datetime
 import json
 
 
-
 def genNetworkData(processedData, processedLabels):
     trainX, testX, trainY, testY = train_test_split(
         np.array(processedData),
@@ -37,7 +36,9 @@ def evaluate(model, train_x, train_y, test_x, test_y):
     )
 
 
-def runNetwork(trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs):
+def runNetwork(
+    trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
+):
 
     num_features = 4
 
@@ -72,17 +73,10 @@ def runNetwork(trainX, testX, trainY, testY, sequence_length, _learning_rate, _b
         epochs=_epochs,
         batch_size=_batch_size,
     )
-    
+
     directory = "debug/models/"
-    filename = 'test-{date:%Y-%m-%d-%H-%M-%S}'.format( date=datetime.datetime.now())
-    
+    filename = "test-{date:%Y-%m-%d-%H-%M-%S}".format(date=datetime.datetime.now())
+
     model.save(directory + filename + ".h5")
 
     return model, trainX, trainY, testX, testY
-
-    # Final evaluation of the model
-    # evaluate(model, trainX, trainY, testX, testY)
-
-    # model.summary()
-
-    # model.save('imdb-{0}-{1}-{2}-{3}-{4}.cpkt'.format(combination, _learning_rate, _epochs, _batches, _seed)

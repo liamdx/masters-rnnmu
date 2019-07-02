@@ -12,9 +12,6 @@ from DataAnalysis import *
 from util.rnnmu_utils import similar
 
 
-
-
-
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
     allfiles = []
@@ -109,9 +106,9 @@ def getKerasData(mididict, key_distributions):
             # 1st Start Time 2nd Duration of Note, 3rd Note Velocity, 4th Note Pitch
             notes.append((noteTime, noteDuration, noteVelocity, notePitch))
             # for normalisation in neural network
-            
+
             lastNote = note
-            
+
             if noteTime >= latestNoteTime:
                 latestNoteTime = noteTime
             elif noteTime <= earliestNoteTime:
@@ -271,16 +268,15 @@ def convertDataToMidi(notes, timeScalars, model_name):
 
 def getMidiRunName(model_name):
     directory = "debug/midi/" + model_name
-    
+
     if not os.path.exists(directory):
         os.makedirs(directory)
-        
+
     files = [f.path for f in os.scandir(directory)]
     existingFiles = len(files)
-    if(existingFiles == 0):
+    if existingFiles == 0:
         ret = directory + "/1.mid"
         return ret
     else:
         ret = directory + "/" + str(existingFiles + 1) + ".mid"
         return ret
-    
