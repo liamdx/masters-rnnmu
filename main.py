@@ -11,11 +11,11 @@ start_time = time.process_time()
 
 # Network parameters
 learning_rate = 0.0001
-batch_size = 128
+batch_size = 32
 epochs = 3
 sequence_length = 15
 
-dataset = "maestro"
+dataset = "chopin"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
