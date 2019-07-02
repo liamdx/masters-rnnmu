@@ -19,7 +19,7 @@ dataset = "maestro"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepathsx)
+midi_data, key_distributions = loadMidiData(filepaths)
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
