@@ -5,6 +5,7 @@ from NetworkRun import *
 from util.tensorflow_utils import *
 import copy
 import time
+import random
 
 # debug timing how long dataset takes to load
 start_time = time.process_time()
@@ -45,7 +46,7 @@ model = runNetwork(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "test-2019-07-02-22-29-31"
+loaded_model_name = "test-2019-07-03-15-54-13"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 
@@ -53,8 +54,17 @@ loaded_model = loadModel(loaded_model_name + ".h5")
 tempData = copy.deepcopy(testX)
 # Even when we pass in one sequence, the RNN expects the shape to be 3D
 # e.g. shape of input must be at least (1, sequence_length, num_features)
-sample = tempData
-# Use network to generate some notes
-composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
-# Output to .midi file
-convertDataToMidi(composition, timeScalars, loaded_model_name)
+
+for i in range(30):
+    upperbound = len(tempData)
+    bounds = []
+    for j in range(2):
+        bounds.append(random.randint(0,upperbound))
+    bounds.sort()
+    print(bounds)
+    sample = tempData[bounds[0]:bounds[0] + 50]
+    # Use network to generate some notes
+    composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
+    # Output to .midi file
+    convertDataToMidi(composition, timeScalars, loaded_model_name)
+

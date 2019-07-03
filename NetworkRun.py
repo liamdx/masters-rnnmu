@@ -3,7 +3,7 @@ import keras
 from keras.models import load_model
 import copy
 import numpy as np
-
+from tqdm import tqdm
 
 def loadModel(modelName):
     directory = "debug/models/"
@@ -14,7 +14,7 @@ def loadModel(modelName):
 def startNetworkRun(model, sequence, sequence_length, notesToProduce):
     preds = []
     sample = copy.deepcopy(sequence)
-    for i in range(notesToProduce):
+    for i in tqdm(range(notesToProduce)):
         # sequence shape = (1,notesToProduce,4)
         # pred shape = (1,4)
         pred = model.predict(sample)
