@@ -10,13 +10,13 @@ import scipy.misc as smp
 from matplotlib import pyplot as plt
 from DataAnalysis import *
 from util.rnnmu_utils import similar
-
+from tqdm import tqdm
 
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
     allfiles = []
     print("Collecting filepath")
-    for s in subfolders:
+    for s in subfolders: 
         currentFileArray = [f.path for f in os.scandir(s)]
         for f in currentFileArray:
             allfiles.append(f)
@@ -29,11 +29,8 @@ def getCleanedFilePaths(dataset):
     # not returning "cleaned" files, do we need this check?
     print("Removing Duplicates")
 
-    for f in allfiles:
-        if counter % 128 == 0:
-            percentage = (counter / numFiles) * 100
-            print("Processing Files : %f percent" % percentage)
-
+    for f in tqdm(allfiles):
+    
         currentSimilarityRatio = 0
         currentSimilarityRatio = similar(lastfile, f)
 
@@ -51,10 +48,7 @@ def loadMidiData(cleanfiles):
     midifiles = {}
     key_distributions = {}
     counter = 0
-    for c in cleanfiles:
-        if counter % 8 == 0:
-            percentage = (counter / len(cleanfiles)) * 100
-            print("Processing Files : %f percent" % percentage)
+    for c in tqdm(cleanfiles):
         try:
             mid = pretty_midi.PrettyMIDI(c)
             midifiles[c] = mid
@@ -91,7 +85,7 @@ def getKerasData(mididict, key_distributions):
     shortestNoteDuration, longestNoteDuration = 0, 0
     lowestNotePitch, highestNotePitch = 0, 1
 
-    for k, v in mididict.items():
+    for k, v in tqdm(mididict.items()):
         raw_notes = v.instruments[0].notes
         notes = []
         # not being used right now
@@ -146,11 +140,7 @@ def processKerasData(data, timeScalars, sequenceSize):
     newLabels = []
     print("Converting to LSTM Format")
     counter = 0
-    for i in range(len(data)):
-        # for i in all songs
-        if counter % 16 == 0:
-            percentage = (counter / len(data)) * 100
-            print("Processing Files for Keras : %f percent" % percentage)
+    for i in tqdm(range(len(data))):
         # only take first 1000 notes of song (for now)
         # for j in range(len(data[i])):
         # for j in each note in each song
@@ -247,11 +237,12 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
 
 
 def convertDataToMidi(notes, timeScalars, model_name):
+    print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
     lastNoteStart = 0
-    for n in notes:
+    for n in tqdm(notes):
         # remap output of neural network / normalise notes
         pitch = np.uint8(remap(n[0][3], 0, 1, timeScalars[4], timeScalars[5]))
         velocity = np.uint8(remap(n[0][2], 0, 1, 0, 127))
