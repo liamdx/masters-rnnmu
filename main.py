@@ -12,9 +12,9 @@ start_time = time.process_time()
 # Network parameters
 learning_rate = 0.00005
 batch_size = 64
-epochs = 12
+epochs = 2
 sequence_length = 50
-dataset = "chopin"
+dataset = "classical"
 
 
 # get the filepaths and load for all .midi files in the dataset
@@ -25,7 +25,7 @@ midi_data, key_distributions = loadMidiData(filepaths)
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
 del midi_data  # no longer need original data, free the memory
 # convert to normalized form for network training
-processedData, processedLabels = processKerasData(data, timeScalars, sequence_length)
+processedData, processedLabels = processKerasDataNormalized(data, timeScalars, sequence_length)
 del data  # no longer need unscaled data
 
 # train / test split

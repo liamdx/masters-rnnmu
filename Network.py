@@ -50,7 +50,7 @@ def runNetwork(
     )
     model.add(Dense(256, activation="relu"))
     model.add(Dense(128, activation="sigmoid"))
-    model.add(LSTM(4))
+    model.add(LSTM(32))
     model.add(Dense(4, activation="sigmoid"))
 
     model_optimizer = adam(lr=_learning_rate)

@@ -135,7 +135,7 @@ def getKerasData(mididict, key_distributions):
     )
 
 
-def processKerasData(data, timeScalars, sequenceSize):
+def processKerasDataNormalized(data, timeScalars, sequenceSize):
     newNotes = []
     newLabels = []
     print("Converting to LSTM Format")
@@ -177,35 +177,6 @@ def processKerasData(data, timeScalars, sequenceSize):
             newNotes.append(priorNotes)
         counter += 1
     return (np.array(newNotes), np.array(newLabels))
-
-
-def processKerasDataLastNote(data, timeScalars):
-    processedData = []
-    print("Printing Notes :) ")
-    for i in range(len(data)):
-        newNotes = []
-        for note in data[i]:
-            newNoteTime = float(remap(note[0], timeScalars[0], timeScalars[1], 0, 1))
-            newNoteDuration = float(
-                remap(note[1], timeScalars[2], timeScalars[3], 0, 1)
-            )
-            newNoteVelocity = float(remap(note[2], 0, 127, 0, 1))
-            newNotePitch = float(remap(note[3], timeScalars[4], timeScalars[5], 0, 1))
-            lastNote = newNotes[len(newNotes) - 1]
-            newNotes.append(
-                (
-                    newNoteTime,
-                    newNoteDuration,
-                    newNoteVelocity,
-                    newNotePitch,
-                    lastNote[0],
-                    lastNote[1],
-                    lastNote[2],
-                    lastNote[3],
-                )
-            )
-        processedData.append(newNotes)
-    return processedData
 
 
 def getBinaryKeyVector(key_distribution):
