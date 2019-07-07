@@ -196,8 +196,6 @@ def processKerasDataTokenized(data, sequence_size):
     # fucking YAY
     print("\nTokenizing Data\n") 
     for song in tqdm(data): 
-        s = []
-        d = []
         for j in range(len(song)):
             if(j < sequence_size):
                 j = sequence_size
@@ -216,7 +214,7 @@ def processKerasDataTokenized(data, sequence_size):
             closest_duration = min(durationTokens, key=lambda x: distance(x[1], raw_duration))
             n.append(tokens[int(closest_duration[0])][0])
 
-            s.append(n)
+            new_data.append(n)
 
             x = []
             for k in range(sequence_size):
@@ -236,10 +234,8 @@ def processKerasDataTokenized(data, sequence_size):
                 pn.append(tokens[int(closest_duration[0])][0])
                 x.append(pn)
             
-            d.append(x)
+            labels.append(x)
             # print("Raw offset = %f - Closest Offset Found = %f" % (raw_offset, closest_offset[0]))
-        new_data.append(d)
-        labels.append(s)
     return new_data, labels, tokens       
             # get the closest time in the tokens;
 

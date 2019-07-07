@@ -50,6 +50,9 @@ def runTokenizedNetwork(
     embedding_vecor_length = 32
     max_song_length = 5000
     
+    trainX  = sequence.pad_sequences(trainX, maxlen=max_song_length)
+    testX  = sequence.pad_sequences(testX, maxlen=max_song_length)
+    
     model = Sequential()
     model.add(
         Embedding(512, embedding_vecor_length, input_length=max_song_length)
@@ -65,6 +68,22 @@ def runTokenizedNetwork(
     )
 
     model.summary()
+    
+    print("Network.py: Beginning model training")
+    model.fit(
+        trainX,
+        trainY,
+        validation_data=(testX, testY),
+        epochs=_epochs,
+        batch_size=_batch_size,
+    )
+
+    directory = "debug/models/"
+    filename = "token-test-{date:%Y-%m-%d-%H-%M-%S}".format(date=datetime.datetime.now())
+
+    model.save(directory + filename + ".h5")
+
+    return model, trainX, trainY, testX, testY
 
 def runNormalizedNetwork(
     trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
@@ -100,7 +119,7 @@ def runNormalizedNetwork(
     )
 
     directory = "debug/models/"
-    filename = "test-{date:%Y-%m-%d-%H-%M-%S}".format(date=datetime.datetime.now())
+    filename = "norm-test-{date:%Y-%m-%d-%H-%M-%S}".format(date=datetime.datetime.now())
 
     model.save(directory + filename + ".h5")
 
