@@ -16,7 +16,7 @@ import datetime
 import json
 
 
-def genNetworkData(processedData, processedLabels):
+def genNormalizedNetworkData(processedData, processedLabels):
     trainX, testX, trainY, testY = train_test_split(
         np.array(processedData),
         np.array(processedLabels),
@@ -25,7 +25,15 @@ def genNetworkData(processedData, processedLabels):
     )
     return trainX, testX, trainY, testY
 
-
+def genTokenizedNetworkData(processedData, processedLabels):
+    trainX, testX, trainY, testY = train_test_split(
+        np.array(processedData),
+        np.array(processedLabels),
+        test_size=0.25,
+        random_state=42,
+    )
+    return trainX, testX, trainY, testY
+    
 def evaluate(model, train_x, train_y, test_x, test_y):
     test_loss, test_acc = model.evaluate(test_x, test_y)
     train_loss, train_acc = model.evaluate(train_x, train_y)
@@ -35,8 +43,30 @@ def evaluate(model, train_x, train_y, test_x, test_y):
         )
     )
 
+def runTokenizedNetwork(
+    trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
+):
+    num_features = 4
+    embedding_vecor_length = 32
+    max_song_length = 5000
+    
+    model = Sequential()
+    model.add(
+        Embedding(512, embedding_vecor_length, input_length=max_song_length)
+    )
+    model.add(Dense(256, activation="relu"))
+    model.add(Dense(128, activation="sigmoid"))
+    model.add(LSTM(32))
+    model.add(Dense(4, activation="sigmoid"))
 
-def runNetwork(
+    model_optimizer = adam(lr=_learning_rate)
+    model.compile(
+        loss="categorical_crossentropy", optimizer=model_optimizer, metrics=["accuracy"]
+    )
+
+    model.summary()
+
+def runNormalizedNetwork(
     trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
 ):
 
