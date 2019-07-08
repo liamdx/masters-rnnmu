@@ -11,14 +11,15 @@ from matplotlib import pyplot as plt
 from DataAnalysis import *
 from util.rnnmu_utils import similar
 from tqdm import tqdm
-import collections 
+import collections
 import operator
+
 
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
     allfiles = []
     print("Collecting filepath")
-    for s in subfolders: 
+    for s in subfolders:
         currentFileArray = [f.path for f in os.scandir(s)]
         for f in currentFileArray:
             allfiles.append(f)
@@ -32,7 +33,7 @@ def getCleanedFilePaths(dataset):
     print("Removing Duplicates")
 
     for f in tqdm(allfiles):
-    
+
         currentSimilarityRatio = 0
         currentSimilarityRatio = similar(lastfile, f)
 
@@ -180,24 +181,27 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
         counter += 1
     return (np.array(newNotes), np.array(newLabels))
 
+
 def processKerasDataTokenized(data, sequence_size):
     # 128 resolution for notes,velocity, 128 separate durations and offsets remembered
-    # need to convert existing data to tokens. 
-    # also need to recreate the prior notes for tokens too. 
+    # need to convert existing data to tokens.
+    # also need to recreate the prior notes for tokens too.
     max_tokens = 512
     tokens_remaining = copy.copy(max_tokens)
-    pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(data)
-    
+    pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
+        data
+    )
     tokens = getTokens(offsets_occurences, durations_occurences)
     offsetTokens = tokens[256:384]
     durationTokens = tokens[384:512]
     new_data = []
     labels = []
-    # fucking YAY
-    print("\nTokenizing Data\n") 
-    for song in tqdm(data): 
+    print("\nTokenizing Data\n")
+    for song in tqdm(data):
+        song_labels = []
+        song_data = []
         for j in range(len(song)):
-            if(j < sequence_size):
+            if j < sequence_size:
                 j = sequence_size
             note = song[j]
             n = []
@@ -208,10 +212,12 @@ def processKerasDataTokenized(data, sequence_size):
             raw_duration = note[1]
             n.append(pitch)
             n.append(128 + velocity)
-            
+
             closest_offset = min(offsetTokens, key=lambda x: distance(x[1], raw_offset))
             n.append(tokens[int(closest_offset[0])][0])
-            closest_duration = min(durationTokens, key=lambda x: distance(x[1], raw_duration))
+            closest_duration = min(
+                durationTokens, key=lambda x: distance(x[1], raw_duration)
+            )
             n.append(tokens[int(closest_duration[0])][0])
 
             new_data.append(n)
@@ -228,25 +234,30 @@ def processKerasDataTokenized(data, sequence_size):
                 pn.append(pitch)
                 pn.append(128 + velocity)
 
-                closest_offset = min(offsetTokens, key=lambda x: distance(x[1], raw_offset))
+                closest_offset = min(
+                    offsetTokens, key=lambda x: distance(x[1], raw_offset)
+                )
                 pn.append(tokens[int(closest_offset[0])][0])
-                closest_duration = min(durationTokens, key=lambda x: distance(x[1], raw_duration))
+                closest_duration = min(
+                    durationTokens, key=lambda x: distance(x[1], raw_duration)
+                )
                 pn.append(tokens[int(closest_duration[0])][0])
                 x.append(pn)
-            
+
             labels.append(x)
             # print("Raw offset = %f - Closest Offset Found = %f" % (raw_offset, closest_offset[0]))
-    return new_data, labels, tokens       
-            # get the closest time in the tokens;
+    return new_data, labels, tokens
+    # get the closest time in the tokens;
 
 
-def distance(a,b):
-    if(a > b):
+def distance(a, b):
+    if a > b:
         return a - b
-    elif(a < b):
+    elif a < b:
         return b - a
     else:
         return 0
+
 
 def getTokens(offset_occurences, duration_occurences):
     # offset tokenization
@@ -261,31 +272,34 @@ def getTokens(offset_occurences, duration_occurences):
     c_duration_occurences = copy.deepcopy(duration_occurences)
     durations = []
     for i in range(128):
-        currentMaxKey = max(c_duration_occurences.items(), key=operator.itemgetter(1))[0]
+        currentMaxKey = max(c_duration_occurences.items(), key=operator.itemgetter(1))[
+            0
+        ]
         durations.append(currentMaxKey)
         c_duration_occurences.pop(currentMaxKey)
-    
+
     del c_duration_occurences
     del c_offset_occurences
-  
+
     tokens = []
     for i in range(128):
-        tokens.append((i,i))
+        tokens.append((i, i))
     for i in range(128):
         tokens.append((128 + i, i))
     for i in range(128):
         tokens.append((256 + i, offsets[i]))
     for i in range(128):
         tokens.append((384 + i, durations[i]))
-    
+
     return tokens
+
 
 def countTokenOccurences(data):
     note_pitches = collections.OrderedDict()
     note_offsets = collections.OrderedDict()
     note_durations = collections.OrderedDict()
     note_velocities = collections.OrderedDict()
-    
+
     print("Counting Occurences for Tokenization")
     for song in data:
 
@@ -299,23 +313,23 @@ def countTokenOccurences(data):
                 note_pitches[pitch] = 1
             else:
                 note_pitches[pitch] += 1
-            
+
             if velocity not in note_velocities:
                 note_velocities[velocity] = 1
             else:
                 note_velocities[velocity] += 1
-            
+
             if duration not in note_durations:
                 note_durations[duration] = 1
             else:
                 note_durations[duration] += 1
-            
+
             if offset not in note_offsets:
                 note_offsets[offset] = 1
             else:
                 note_offsets[offset] += 1
 
-    return note_pitches, note_offsets,note_durations, note_velocities
+    return note_pitches, note_offsets, note_durations, note_velocities
 
 
 def getBinaryKeyVector(key_distribution):

@@ -5,6 +5,7 @@ import copy
 import numpy as np
 from tqdm import tqdm
 
+
 def loadModel(modelName):
     directory = "debug/models/"
     model = load_model(directory + modelName, compile=True)

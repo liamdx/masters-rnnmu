@@ -24,11 +24,13 @@ midi_data, key_distributions = loadMidiData(filepaths[0:50])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
-  # no longer need original data, free the memory
+# no longer need original data, free the memory
 
 # convert to normalized form for network training
-processedData, processedLabels, tokens = processKerasDataTokenized(data, sequence_length)
- # no longer need unscaled data
+processedData, processedLabels, tokens = processKerasDataTokenized(
+    data, sequence_length
+)
+# no longer need unscaled data
 del data, midi_data
 # train / test split
 # trainX, testX, trainY, testY = genNetworkData(processedData, processedLabels)
@@ -61,12 +63,11 @@ for i in range(30):
     upperbound = len(tempData)
     bounds = []
     for j in range(2):
-        bounds.append(random.randint(0,upperbound))
+        bounds.append(random.randint(0, upperbound))
     bounds.sort()
     print(bounds)
-    sample = tempData[bounds[0]:bounds[0] + 50]
+    sample = tempData[bounds[0] : bounds[0] + 50]
     # Use network to generate some notes
     composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
     # Output to .midi file
     convertDataToMidi(composition, timeScalars, loaded_model_name)
-
