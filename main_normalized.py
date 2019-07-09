@@ -20,7 +20,7 @@ dataset = "classical"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths)
+midi_data, key_distributions = loadMidiData(filepaths[0:50])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -49,7 +49,7 @@ model = runNormalizedNetwork(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "test-2019-07-03-15-54-13"
+loaded_model_name = "norm-test-2019-07-08-21-30-16"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 
@@ -67,6 +67,6 @@ for i in range(30):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 50]
     # Use network to generate some notes
-    composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
+    composition = startNormalizedNetworkRun(loaded_model, sample, sequence_length, 150)
     # Output to .midi file
-    convertDataToMidi(composition, timeScalars, loaded_model_name)
+    convertNormalizedDataToMidi(composition, timeScalars, loaded_model_name)

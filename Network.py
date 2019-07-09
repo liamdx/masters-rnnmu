@@ -3,7 +3,7 @@ import keras
 from keras.callbacks import TensorBoard
 from keras.datasets import imdb
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout
+from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
@@ -51,21 +51,21 @@ def runTokenizedNetwork(
 ):
     num_features = 4
     embedding_vecor_length = 32
-    max_song_length = 5000
+    max_song_length = 500
 
     trainX = sequence.pad_sequences(trainX, maxlen=max_song_length)
     testX = sequence.pad_sequences(testX, maxlen=max_song_length)
 
     model = Sequential()
-    model.add(Embedding(512, embedding_vecor_length, input_length=max_song_length, return_sequences=True))
-    model.add(Dense(256, activation="relu"))
-    model.add(Dense(128, activation="sigmoid"))
-    model.add(LSTM(32))
-    model.add(Dense(4, activation="sigmoid"))
+    model.add(Embedding(512, embedding_vecor_length, input_length=max_song_length))
+    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="relu"))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(LSTM(100))
+    model.add(Dense(4, activation="relu"))
 
     model_optimizer = adam(lr=_learning_rate)
     model.compile(
-        loss="categorical_crossentropy", optimizer=model_optimizer, metrics=["accuracy"]
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae", "categorical_accuracy"]
     )
 
     model.summary()
@@ -108,7 +108,7 @@ def runNormalizedNetwork(
 
     model_optimizer = adam(lr=_learning_rate)
     model.compile(
-        loss="categorical_crossentropy", optimizer=model_optimizer, metrics=["accuracy"]
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy", "mae"]
     )
 
     model.summary()

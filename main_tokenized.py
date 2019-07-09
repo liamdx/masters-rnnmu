@@ -11,8 +11,8 @@ import random
 start_time = time.process_time()
 
 # Network parameters
-learning_rate = 0.00005
-batch_size = 64
+learning_rate = 0.3
+batch_size = 128
 epochs = 2
 sequence_length = 15
 dataset = "classical"
@@ -70,4 +70,4 @@ for i in range(30):
     # Use network to generate some notes
     composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
     # Output to .midi file
-    convertDataToMidi(composition, timeScalars, loaded_model_name)
+    convertTokenizedDataToMidi(composition, timeScalars, loaded_model_name)

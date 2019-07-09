@@ -187,7 +187,7 @@ def processKerasDataTokenized(data, sequence_size):
     # need to convert existing data to tokens.
     # also need to recreate the prior notes for tokens too.
     max_tokens = 512
-    tokens_remaining = copy.copy(max_tokens)
+    # tokens_remaining = copy.copy(max_tokens)
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
         data
     )
@@ -198,8 +198,6 @@ def processKerasDataTokenized(data, sequence_size):
     labels = []
     print("\nTokenizing Data\n")
     for song in tqdm(data):
-        song_labels = []
-        song_data = []
         for j in range(len(song)):
             if j < sequence_size:
                 j = sequence_size
@@ -220,31 +218,29 @@ def processKerasDataTokenized(data, sequence_size):
             )
             n.append(tokens[int(closest_duration[0])][0])
 
-            new_data.append(n)
+            labels.append(n)
 
             x = []
             for k in range(sequence_size):
                 # get previous notes of length sequenceSize
-                pn = []
                 prevNote = song[j - (k + 1)]
                 pitch = prevNote[3]
                 velocity = prevNote[2]
                 raw_offset = prevNote[0]
                 raw_duration = prevNote[1]
-                pn.append(pitch)
-                pn.append(128 + velocity)
+                x.append(pitch)
+                x.append(128 + velocity)
 
                 closest_offset = min(
                     offsetTokens, key=lambda x: distance(x[1], raw_offset)
                 )
-                pn.append(tokens[int(closest_offset[0])][0])
+                x.append(tokens[int(closest_offset[0])][0])
                 closest_duration = min(
                     durationTokens, key=lambda x: distance(x[1], raw_duration)
                 )
-                pn.append(tokens[int(closest_duration[0])][0])
-                x.append(pn)
+                x.append(tokens[int(closest_duration[0])][0])
 
-            labels.append(x)
+            new_data.append(x)
             # print("Raw offset = %f - Closest Offset Found = %f" % (raw_offset, closest_offset[0]))
     return new_data, labels, tokens
     # get the closest time in the tokens;
@@ -360,7 +356,7 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
     return NewValue
 
 
-def convertDataToMidi(notes, timeScalars, model_name):
+def convertNormalizedDataToMidi(notes, timeScalars, model_name):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
@@ -380,6 +376,20 @@ def convertDataToMidi(notes, timeScalars, model_name):
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
+def convertTokenizedDataToMidi(notes, tokens, model_name):
+    print("Converting raw notes to MIDI")
+    mid = pretty_midi.PrettyMIDI()
+    inst = pretty_midi.Instrument(0)
+    # inst.program = 0
+    lastNoteStart = 0
+    raw_notes = []
+    for token in tqdm(notes):
+        message = tokens[token]
+        raw_notes.append(message)
+
+    return raw_notes
+    # mid.instruments.append(inst)
+    # mid.write(getMidiRunName(model_name))
 
 def getMidiRunName(model_name):
     directory = "debug/midi/" + model_name

@@ -12,7 +12,7 @@ def loadModel(modelName):
     return model
 
 
-def startNetworkRun(model, sequence, sequence_length, notesToProduce):
+def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
     preds = []
     sample = copy.deepcopy(sequence)
     for i in tqdm(range(notesToProduce)):
