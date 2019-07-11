@@ -50,24 +50,10 @@ model = runTokenizedNetwork(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "test-2019-07-03-15-54-13"
+loaded_model_name = "token-test-2019-07-08-19-43-03"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 
 # take some test data
 tempData = copy.deepcopy(testX)
-# Even when we pass in one sequence, the RNN expects the shape to be 3D
-# e.g. shape of input must be at least (1, sequence_length, num_features)
-
-for i in range(30):
-    upperbound = len(tempData)
-    bounds = []
-    for j in range(2):
-        bounds.append(random.randint(0, upperbound))
-    bounds.sort()
-    print(bounds)
-    sample = tempData[bounds[0] : bounds[0] + 50]
-    # Use network to generate some notes
-    composition = startNetworkRun(loaded_model, sample, sequence_length, 300)
-    # Output to .midi file
-    convertTokenizedDataToMidi(composition, timeScalars, loaded_model_name)
+pred = loaded_model.predict(tempData[0:10])

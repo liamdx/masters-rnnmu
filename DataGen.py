@@ -386,10 +386,17 @@ def convertTokenizedDataToMidi(notes, tokens, model_name):
     for token in tqdm(notes):
         message = tokens[token]
         raw_notes.append(message)
-
-    return raw_notes
+    notes = list(chunks(raw_notes, 4))
+    return(notes)
+    
     # mid.instruments.append(inst)
-    # mid.write(getMidiRunName(model_name))
+    #  mid.write(getMidiRunName(model_name))
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 def getMidiRunName(model_name):
     directory = "debug/midi/" + model_name
