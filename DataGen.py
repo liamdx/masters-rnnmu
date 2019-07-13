@@ -380,17 +380,23 @@ def convertTokenizedDataToMidi(notes, tokens, model_name):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
-    # inst.program = 0
     lastNoteStart = 0
     raw_notes = []
     for token in tqdm(notes):
         message = tokens[token]
         raw_notes.append(message)
     notes = list(chunks(raw_notes, 4))
-    return(notes)
+    for note in notes:
+        pitch = 0
+        velocity = 0
+        duration = 0
+        start = lastNoteStart + 0 # offset
+        n = pretty_midi.Note(velocity, pitch. start, start + duration)
+        inst.notes.append(n)
     
-    # mid.instruments.append(inst)
-    #  mid.write(getMidiRunName(model_name))
+    mid.instruments.append(inst)
+    mid.write(getMidiRunName(model_name))
+
 
 
 def chunks(l, n):

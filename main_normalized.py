@@ -20,7 +20,7 @@ dataset = "classical"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[0:50])
+midi_data, key_distributions = loadMidiData(filepaths)
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -49,7 +49,7 @@ model = runNormalizedNetwork(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "norm-test-2019-07-08-21-30-16"
+loaded_model_name = "norm-test-2019-07-11-18-25-57"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 
@@ -58,7 +58,7 @@ tempData = copy.deepcopy(testX)
 # Even when we pass in one sequence, the RNN expects the shape to be 3D
 # e.g. shape of input must be at least (1, sequence_length, num_features)
 
-for i in range(30):
+for i in range(15):
     upperbound = len(tempData)
     bounds = []
     for j in range(2):
