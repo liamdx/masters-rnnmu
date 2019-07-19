@@ -383,15 +383,17 @@ def convertTokenizedDataToMidi(notes, tokens, model_name):
     lastNoteStart = 0
     raw_notes = []
     for token in tqdm(notes):
-        message = tokens[token]
-        raw_notes.append(message)
-    notes = list(chunks(raw_notes, 4))
-    for note in notes:
-        pitch = 0
-        velocity = 0
-        duration = 0
-        start = lastNoteStart + 0 # offset
-        n = pretty_midi.Note(velocity, pitch. start, start + duration)
+        for msg in token[0]:
+            raw_notes.append(tokens[int(msg)][1])
+        
+    new_notes = list(chunks(raw_notes, 4))
+    
+    for note in new_notes:
+        pitch = note[0]
+        velocity = note[1]
+        duration = note[3]
+        start = lastNoteStart + note[2] # offset
+        n = pretty_midi.Note(velocity, pitch, start, start + duration)
         inst.notes.append(n)
     
     mid.instruments.append(inst)

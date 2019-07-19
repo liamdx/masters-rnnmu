@@ -47,22 +47,23 @@ def evaluate(model, train_x, train_y, test_x, test_y):
 
 
 def runTokenizedNetwork(
-    trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
+    trainX, testX, trainY, testY, sequence_length, _learning_rate,
+    _batch_size, _epochs
 ):
     num_features = 4
-    embedding_vecor_length = 32
-    max_song_length = 500
+    embedding_vecor_length = 128
 
-    trainX = sequence.pad_sequences(trainX, maxlen=max_song_length)
-    testX = sequence.pad_sequences(testX, maxlen=max_song_length)
 
     model = Sequential()
-    model.add(Embedding(512, embedding_vecor_length, input_length=max_song_length))
-    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="relu"))
+    model.add(Embedding(512, embedding_vecor_length, input_length=sequence_length))
+    model.add(LSTM(200, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="elu"))
     model.add(MaxPooling1D(pool_size=2))
     model.add(LSTM(100))
-    model.add(Dense(4, activation="relu"))
-
+    model.add(Dropout(0.2))
+    model.add(Dense(128, activation="elu"))
+    model.add(Dense(4, activation = "elu"))
     model_optimizer = adam(lr=_learning_rate)
     model.compile(
         loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae", "categorical_accuracy"]
@@ -98,15 +99,15 @@ def runNormalizedNetwork(
     model = Sequential()
     model.add(
         LSTM(
-            units=32, input_shape=(sequence_length, num_features), return_sequences=True
+            units=256, input_shape=(sequence_length, num_features), return_sequences=True
         )
     )
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.3))
     model.add(Dense(512, activation="relu"))
     model.add(Dense(256, activation="relu"))
-    model.add(LSTM(64))
-    model.add(Dropout(0.2))
-    model.add(Dense(64,activation="relu"))
+    model.add(LSTM(128))
+    model.add(Dropout(0.15))
+    model.add(Dense(128,activation="relu"))
     model.add(Dense(4, activation="sigmoid"))
 
     model_optimizer = adam(lr=_learning_rate)
