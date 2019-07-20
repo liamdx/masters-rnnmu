@@ -8,7 +8,6 @@ from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
 from keras.optimizers import adam
-from util.tensorflow_utils import *
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD

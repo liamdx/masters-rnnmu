@@ -2,7 +2,6 @@ from DataGen import *
 from DataAnalysis import *
 from Network import *
 from NetworkRun import *
-from util.tensorflow_utils import *
 import copy
 import time
 import random
@@ -20,7 +19,7 @@ dataset = "classical"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[0:100])
+midi_data, key_distributions = loadMidiData(filepaths[0:10])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
