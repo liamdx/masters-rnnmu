@@ -8,12 +8,12 @@ from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
 from keras.optimizers import adam
-from util.tensorflow_utils import *
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
 import datetime
 import json
+import numpy as np
 
 
 def genNormalizedNetworkData(processedData, processedLabels):
@@ -45,6 +45,49 @@ def evaluate(model, train_x, train_y, test_x, test_y):
         )
     )
 
+def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
+    _batch_size, _epochs
+        ):
+    
+    model = Sequential()
+    model.add(
+        LSTM(
+            units=256, input_shape=(480, 10), return_sequences=True
+        )
+    )
+    model.add(Dropout(0.3))
+    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="elu"))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(LSTM(100))
+    model.add(Dropout(0.2))
+    model.add(Dense(128, activation="relu"))
+    model.add(Dense(10, activation = "relu"))
+    model_optimizer = adam(lr=_learning_rate)
+    model.compile(
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae", "categorical_accuracy"]
+    )
+
+    model.summary()
+
+    print("Network.py: Beginning model training")
+    model.fit(
+        trainX,
+        trainY,
+        validation_data=(testX, testY),
+        epochs=_epochs,
+        batch_size=_batch_size,
+    )
+
+    directory = "debug/models/"
+    filename = "token-test-{date:%Y-%m-%d-%H-%M-%S}".format(
+        date=datetime.datetime.now()
+    )
+
+    model.save(directory + filename + ".h5")
+
+    return model, trainX, trainY, testX, testY
+    
+    
 
 def runTokenizedNetwork(
     trainX, testX, trainY, testY, sequence_length, _learning_rate,

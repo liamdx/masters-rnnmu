@@ -183,67 +183,66 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
 
 
 def processKerasDataTokenized(data, sequence_size):
-    # 128 resolution for notes,velocity, 128 separate durations and offsets remembered
-    # need to convert existing data to tokens.
-    # also need to recreate the prior notes for tokens too.
-    max_tokens = 512
-    # tokens_remaining = copy.copy(max_tokens)
+    num_simultaneous_notes = 10
+    num_timesteps = 3840
+    timestep_resolution = 60
+
+    processedData = [] 
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
         data
     )
-    tokens = getTokens(offsets_occurences, durations_occurences)
-    offsetTokens = tokens[256:384]
-    durationTokens = tokens[384:512]
-    new_data = []
-    labels = []
-    print("\nTokenizing Data\n")
+    tokens = getTokens(pitches_occurences, velocities_occurences)
+
+    print("\nConverting data to final network representation\n")
+
+    y = []
+
     for song in tqdm(data):
-        for j in range(len(song)):
-            if j < sequence_size:
-                j = sequence_size
-            note = song[j]
-            n = []
-            # pitch is just pitch, same with velocity
-            pitch = note[3]
+        lastStartTime = 0
+        song_data = np.zeros((num_timesteps, num_simultaneous_notes), dtype=int)
+
+        for note in song:
+            time = note[0]
+            duration = note[1]
             velocity = note[2]
-            raw_offset = note[0]
-            raw_duration = note[1]
-            n.append(pitch)
-            n.append(128 + velocity)
+            pitch = note[3]
+            lastStartTime += time
 
-            closest_offset = min(offsetTokens, key=lambda x: distance(x[1], raw_offset))
-            n.append(tokens[int(closest_offset[0])][0])
-            closest_duration = min(
-                durationTokens, key=lambda x: distance(x[1], raw_duration)
-            )
-            n.append(tokens[int(closest_duration[0])][0])
+            note_token = tokens[(pitch, velocity)]
+            note_duration = int(timestep_resolution * duration)
+            note_start = int((lastStartTime) * timestep_resolution)
 
-            labels.append(n)
-
-            x = []
-            for k in range(sequence_size):
-                # get previous notes of length sequenceSize
-                prevNote = song[j - (k + 1)]
-                pitch = prevNote[3]
-                velocity = prevNote[2]
-                raw_offset = prevNote[0]
-                raw_duration = prevNote[1]
-                x.append(pitch)
-                x.append(128 + velocity)
-
-                closest_offset = min(
-                    offsetTokens, key=lambda x: distance(x[1], raw_offset)
-                )
-                x.append(tokens[int(closest_offset[0])][0])
-                closest_duration = min(
-                    durationTokens, key=lambda x: distance(x[1], raw_duration)
-                )
-                x.append(tokens[int(closest_duration[0])][0])
-
-            new_data.append(x)
-            # print("Raw offset = %f - Closest Offset Found = %f" % (raw_offset, closest_offset[0]))
-    return new_data, labels, tokens
-    # get the closest time in the tokens;
+            if (note_start + note_duration >= num_timesteps):
+                break
+            else:
+                # place the note
+                for i in range(note_duration):
+                    for j in range(num_simultaneous_notes):
+                        value = song_data[note_start + i][j]
+                        if value == 0:
+                            song_data[note_start + i][j] = note_token
+                            break
+        
+        y.append(song_data)
+    
+    x = []
+    for song in tqdm(y):
+        song_train = []
+        for i in range(len(song)):
+            if(i < sequence_size):
+                i = sequence_size
+            
+            lastNotes = []
+            for j in range(sequence_size):
+                lastNotes.append(song[i - j])
+            song_train.append(lastNotes)
+        x.append(song_train)
+    
+    X = np.concatenate(x)
+    Y = np.concatenate(y)
+    # debug to not break compatibility
+    return X, Y , tokens
+            
 
 
 def distance(a, b):
@@ -255,39 +254,15 @@ def distance(a, b):
         return 0
 
 
-def getTokens(offset_occurences, duration_occurences):
-    # offset tokenization
-    c_offset_occurences = copy.deepcopy(offset_occurences)
-    offsets = []
-    for i in range(128):
-        currentMaxKey = max(c_offset_occurences.items(), key=operator.itemgetter(1))[0]
-        offsets.append(currentMaxKey)
-        c_offset_occurences.pop(currentMaxKey)
-
-    # duration tokenization
-    c_duration_occurences = copy.deepcopy(duration_occurences)
-    durations = []
-    for i in range(128):
-        currentMaxKey = max(c_duration_occurences.items(), key=operator.itemgetter(1))[
-            0
-        ]
-        durations.append(currentMaxKey)
-        c_duration_occurences.pop(currentMaxKey)
-
-    del c_duration_occurences
-    del c_offset_occurences
-
-    tokens = []
-    for i in range(128):
-        tokens.append((i, i))
-    for i in range(128):
-        tokens.append((128 + i, i))
-    for i in range(128):
-        tokens.append((256 + i, offsets[i]))
-    for i in range(128):
-        tokens.append((384 + i, durations[i]))
-
-    return tokens
+def getTokens(pitch_occurences, velocity_occurences):
+    tokens = {}
+    counter = 1
+    for pitch in pitch_occurences:
+        for velocity in velocity_occurences:
+            currentCombination = (pitch, velocity)
+            tokens[currentCombination] = counter
+            counter += 1
+    return(tokens)
 
 
 def countTokenOccurences(data):
