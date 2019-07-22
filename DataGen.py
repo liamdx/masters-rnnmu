@@ -196,10 +196,7 @@ def processKerasDataTokenized(data, sequence_size):
     print("\nConverting data to final network representation\n")
     for song in tqdm(data):
         for note in song:
-            
-
-
-
+            print("should of kept the image shiz :)")
 
 def distance(a, b):
     if a > b:
