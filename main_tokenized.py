@@ -13,13 +13,13 @@ start_time = time.process_time()
 learning_rate = 0.01
 batch_size = 64
 epochs = 2
-sequence_length = 50
+sequence_length = 480
 dataset = "classical"
 
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[0:10])
+midi_data, key_distributions = loadMidiData(filepaths[0:100])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -43,8 +43,8 @@ print(
     % ((time.process_time() - start_time) / 60.0)
 )
 # Begin training the neural network based on the above parameters
-model = runTokenizedNetwork(
-    trainX, testX, trainY, testY, sequence_length * 4, learning_rate, batch_size, epochs
+model = runTokenNetwork2(
+    trainX, testX, trainY, testY, learning_rate, batch_size, epochs
 )
 
 

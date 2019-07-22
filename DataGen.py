@@ -183,10 +183,10 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
 
 
 def processKerasDataTokenized(data, sequence_size):
-    # 128 resolution for notes,velocity, 128 separate durations and offsets remembered
-    # need to convert existing data to tokens.
-    # also need to recreate the prior notes for tokens too.
-    # tokens_remaining = copy.copy(max_tokens)
+    num_simultaneous_notes = 10
+    num_timesteps = 3840
+    timestep_resolution = 60
+
     processedData = [] 
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
         data
@@ -194,9 +194,56 @@ def processKerasDataTokenized(data, sequence_size):
     tokens = getTokens(pitches_occurences, velocities_occurences)
 
     print("\nConverting data to final network representation\n")
+
+    y = []
+
     for song in tqdm(data):
+        lastStartTime = 0
+        song_data = np.zeros((num_timesteps, num_simultaneous_notes), dtype=int)
+
         for note in song:
-            print("should of kept the image shiz :)")
+            time = note[0]
+            duration = note[1]
+            velocity = note[2]
+            pitch = note[3]
+            lastStartTime += time
+
+            note_token = tokens[(pitch, velocity)]
+            note_duration = int(timestep_resolution * duration)
+            note_start = int((lastStartTime) * timestep_resolution)
+
+            if (note_start + note_duration >= num_timesteps):
+                break
+            else:
+                # place the note
+                for i in range(note_duration):
+                    for j in range(num_simultaneous_notes):
+                        value = song_data[note_start + i][j]
+                        if value == 0:
+                            song_data[note_start + i][j] = note_token
+                            break
+        
+        y.append(song_data)
+    
+    x = []
+    for song in tqdm(y):
+        song_train = []
+        for i in range(len(song)):
+            if(i < sequence_size):
+                i = sequence_size
+            
+            lastNotes = []
+            for j in range(sequence_size):
+                lastNotes.append(song[i - j])
+            song_train.append(lastNotes)
+        x.append(song_train)
+    
+    X = np.concatenate(x)
+    Y = np.concatenate(y)
+    # debug to not break compatibility
+    return X, Y , tokens
+            
+
 
 def distance(a, b):
     if a > b:
