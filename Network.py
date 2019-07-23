@@ -3,7 +3,7 @@ import keras
 from keras.callbacks import TensorBoard
 from keras.datasets import imdb
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D
+from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D, Conv2D, MaxPooling2D
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
@@ -14,25 +14,28 @@ from keras.optimizers import SGD
 import datetime
 import json
 import numpy as np
-
+from util.rprop import * 
 
 def genNormalizedNetworkData(processedData, processedLabels):
+    print("Performing train-test split")
     trainX, testX, trainY, testY = train_test_split(
         np.array(processedData),
         np.array(processedLabels),
         test_size=0.25,
         random_state=42,
     )
+    print("...Done")
     return trainX, testX, trainY, testY
 
 
-def genTokenizedNetworkData(processedData, processedLabels):
-    trainX, testX, trainY, testY = train_test_split(
-        np.array(processedData),
-        np.array(processedLabels),
-        test_size=0.25,
-        random_state=42,
-    )
+def genTokenizedNetworkData(processedData, processedLabels, test_split):
+    print("Performing train-test split")
+    separator = int(len(processedLabels) * (1 - test_split))
+    trainX = processedData[:separator]
+    testX = processedData[separator:]
+    trainY = processedLabels[:separator]
+    testY = processedLabels[separator:]
+
     return trainX, testX, trainY, testY
 
 
@@ -46,25 +49,27 @@ def evaluate(model, train_x, train_y, test_x, test_y):
     )
 
 def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
-    _batch_size, _epochs
+    _batch_size, _epochs, sequence_length
         ):
     
     model = Sequential()
     model.add(
         LSTM(
-            units=256, input_shape=(480, 10), return_sequences=True
+            units=128, input_shape=(sequence_length, 10), return_sequences=True, dropout=0.1, recurrent_dropout=0.1
         )
     )
-    model.add(Dropout(0.3))
-    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="elu"))
+    model.add(Conv1D(filters=8, kernel_size=3, padding="same", activation="sigmoid"))
     model.add(MaxPooling1D(pool_size=2))
-    model.add(LSTM(100))
-    model.add(Dropout(0.2))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dense(256, activation = "sigmoid"))
+    model.add(LSTM(32, return_sequences=True, dropout=0.1, recurrent_dropout=0.1))
+    model.add(Dense(128, activation = "relu"))
+    model.add(LSTM(32, dropout=0.1, recurrent_dropout=0.1))
+    model.add(Dense(64, activation="relu"))
     model.add(Dense(10, activation = "relu"))
     model_optimizer = adam(lr=_learning_rate)
+    #model_optimizer = iRprop_()
     model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae", "categorical_accuracy"]
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
     )
 
     model.summary()
@@ -85,7 +90,7 @@ def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
 
     model.save(directory + filename + ".h5")
 
-    return model, trainX, trainY, testX, testY
+    return model, filename
     
     
 

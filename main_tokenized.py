@@ -13,7 +13,7 @@ start_time = time.process_time()
 learning_rate = 0.01
 batch_size = 64
 epochs = 2
-sequence_length = 480
+sequence_length = 240
 dataset = "classical"
 
 
@@ -34,7 +34,7 @@ del data, midi_data
 # train / test split
 # trainX, testX, trainY, testY = genNetworkData(processedData, processedLabels)
 
-trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processedLabels)
+trainX, testX, trainY, testY = genTokenizedNetworkData(processedData, processedLabels, 0.25)
 del processedData
 del processedLabels
 
@@ -43,19 +43,23 @@ print(
     % ((time.process_time() - start_time) / 60.0)
 )
 # Begin training the neural network based on the above parameters
-model = runTokenNetwork2(
-    trainX, testX, trainY, testY, learning_rate, batch_size, epochs
+model, filename = runTokenNetwork2(
+    trainX, testX, trainY, testY, learning_rate, batch_size, epochs, sequence_length
 )
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "token-test-2019-07-23-03-04-32"
-loaded_model = loadModel(loaded_model_name + ".h5")
+loaded_model = loadModel(filename + ".h5")
+loaded_model.summary()
 
+tokens[(0,0)] = 0
 
 # take some test data
 tempData = copy.deepcopy(testX)
 
+prediction = loaded_model.predict(tempData[3840:7860])
+
+# how many compositions should we produce?
 for i in range(1):
     upperbound = len(tempData)
     bounds = []
@@ -65,7 +69,7 @@ for i in range(1):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 1]
     # Use network to generate some notes
-    composition = startTokenizedNetworkRun(loaded_model, sample, sequence_length, 10)
+    composition = startTokenizedNetworkRun(loaded_model, sample, sequence_length, 1)
     # Output to .midi file
-    convertTokenizedDataToMidi(composition, tokens, loaded_model_name)    
+    convertTokenizedDataToMidi2(composition, tokens, filename, 60)    
 

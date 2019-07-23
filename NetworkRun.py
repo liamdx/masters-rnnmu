@@ -27,28 +27,18 @@ def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
 
     return preds
 
-def startTokenizedNetworkRun(model, sequence, sequence_length, notesToProduce):
+def startTokenizedNetworkRun(model, sequence, sequence_length, secondsOfMusic):
     preds = []
     sample = copy.deepcopy(sequence)
-    for i in range(notesToProduce):
-        # sequence shape = (1,notesToProduce,4)
-        # pred shape = (1,4)
+    length__ = sequence_length * secondsOfMusic
+    print("Composing: Genius at work")
+    for i in tqdm(range(length__)):
         pred = model.predict(sample)
-        print("\nPred =")
-        print(pred)
-        # shift the array down so that the last row = 0,0,0,0
-        # then replace the null values with pred
-        print("\nsample before Roll")
-        print(sample)
-        sample = np.roll(sample, -4, axis=1)
-        print("\nsample after roll")
-        print(sample)
-        for j in range(4):
-            # we want to replace the last 4 values in the list
-            index = ((sequence_length * 4) - 4) + j
-            sample[0][index] = pred[0][j]
-        print("\nSample after substitution\n")
-        print(sample)
         preds.append(pred)
-
+        print("last row  before roll = ")
+        print(sample[0][len(sample) - 1])
+        sample = np.roll(sample, -1, 1)
+        sample[0][len(sample) - 1] = pred
+        print("last row  after roll = ")
+        print(sample[0][len(sample) - 1])
     return preds

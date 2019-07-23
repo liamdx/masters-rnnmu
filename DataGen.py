@@ -222,7 +222,6 @@ def processKerasDataTokenized(data, sequence_size):
                         if value == 0:
                             song_data[note_start + i][j] = note_token
                             break
-        
         y.append(song_data)
     
     x = []
@@ -238,8 +237,10 @@ def processKerasDataTokenized(data, sequence_size):
             song_train.append(lastNotes)
         x.append(song_train)
     
+    print("Finalising network data")
     X = np.concatenate(x)
-    Y = np.concatenate(y)
+    Y = np.vstack(y)
+    print("...Done\n")
     # debug to not break compatibility
     return X, Y , tokens
             
@@ -351,31 +352,86 @@ def convertNormalizedDataToMidi(notes, timeScalars, model_name):
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
-def convertTokenizedDataToMidi(notes, tokens, model_name):
+def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
-    lastNoteStart = 0
-    raw_notes = []
-    for token in tqdm(notes):
-        for msg in token[0]:
-            raw_notes.append(tokens[int(msg)][1])
-        
-    new_notes = list(chunks(raw_notes, 4))
-    
-    for note in new_notes:
-        pitch = note[0]
-        velocity = note[1]
-        duration = note[3]
-        start = lastNoteStart + note[2] # offset
-        n = pretty_midi.Note(velocity, pitch, start, start + duration)
-        inst.notes.append(n)
+    lastNoteStart, timestepCounter = (0, 0)
+    # what notes are currently being played
+    current_notes = {}
+
+    for timestep in data:
+        for event in timestep:
+            # if we encounter a new note 
+            print("Event Type = ")
+            print(type(event))
+            if event not in current_notes:
+                current_notes[event] = (timestepCounter, 1)
+            else:
+                current_notes[event][1] += 1
+            # if any of the currently playing notes are not
+            # being played at this timestep, remove it from current notes
+            for note, timing in current_notes.items():
+                if note not in timestep:
+                    pitch, velocity = tokens[note]
+                    start = timing[0] / timestep_resolution
+                    duration = timing / timestep_resolution
+                    new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+                    inst.notes.append(new_note)
+                    current_notes.pop(note)
+        timestepCounter += 1
     
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
+def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
+    print("Converting raw notes to MIDI")
+    mid = pretty_midi.PrettyMIDI()
+    inst = pretty_midi.Instrument(0)
+    inv_tokens = dict((v,k) for k,v in tokens.items())
+    lastNoteStart, timestepCounter = (0, 0)
+    # what notes are currently being played
+    current_notes = {}
 
+    for timestep in data:
+        for event in timestep:
+            # if we encounter a new note 
+            for msg in event:
+                if msg not in current_notes:
+                    current_notes[msg] = [timestepCounter, 1]
+                else:
+                    current_notes[msg][1] += 1
+           # if any of the currently playing notes are not
+        # being played at this timestep, remove it from current notes7
+        notesToRemove = []
+        for note, timing in current_notes.items():
+            if note not in timestep:
+                pitch, velocity = inv_tokens[int(note)]
+                start = timing[0] / timestep_resolution
+                duration = timing / timestep_resolution
+                new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+                inst.notes.append(new_note)
+                notesToRemove.append(note)
+        
+        for note in notesToRemove:
+            current_notes.pop(note)
 
+        timestepCounter += 1
+    
+    if bool(current_notes) == True:
+        for note, timing in current_notes.items():
+            pitch, velocity = inv_tokens[int(note)]
+            start = timing[0] / timestep_resolution
+            duration = timing[1] / timestep_resolution
+            new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+            inst.notes.append(new_note)
+    
+    del current_notes
+    print("total number of notes = %d" % len(inst.notes))
+    mid.instruments.append(inst)
+    mid.write(getMidiRunName(model_name))
+
+    
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
