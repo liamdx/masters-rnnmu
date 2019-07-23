@@ -19,7 +19,7 @@ dataset = "classical"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[0:100])
+midi_data, key_distributions = loadMidiData(filepaths[0:10])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -49,7 +49,7 @@ model = runTokenNetwork2(
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "token-test-2019-07-16-23-44-41"
+loaded_model_name = "token-test-2019-07-23-03-04-32"
 loaded_model = loadModel(loaded_model_name + ".h5")
 
 
