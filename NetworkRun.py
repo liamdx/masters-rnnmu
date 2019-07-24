@@ -30,15 +30,15 @@ def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
 def startTokenizedNetworkRun(model, sequence, sequence_length, secondsOfMusic):
     preds = []
     sample = copy.deepcopy(sequence)
-    length__ = sequence_length * secondsOfMusic
+    length__ = int(sequence_length * secondsOfMusic)
     print("Composing: Genius at work")
     for i in tqdm(range(length__)):
         pred = model.predict(sample)
         preds.append(pred)
-        print("last row  before roll = ")
-        print(sample[0][len(sample) - 1])
+#        print("last row  before roll = ")
+#        print(sample[0][len(sample) - 1])
         sample = np.roll(sample, -1, 1)
         sample[0][len(sample) - 1] = pred
-        print("last row  after roll = ")
-        print(sample[0][len(sample) - 1])
+#        print("last row  after roll = ")
+#        print(sample[0][len(sample) - 1])
     return preds

@@ -182,10 +182,8 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
     return (np.array(newNotes), np.array(newLabels))
 
 
-def processKerasDataTokenized(data, sequence_size):
+def processKerasDataTokenized(data, sequence_size, num_timesteps, timestep_resolution):
     num_simultaneous_notes = 10
-    num_timesteps = 3840
-    timestep_resolution = 60
 
     processedData = [] 
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
@@ -393,6 +391,8 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
     # what notes are currently being played
     current_notes = {}
 
+    data = data * len(tokens)
+
     for timestep in data:
         for event in timestep:
             # if we encounter a new note 
@@ -408,7 +408,7 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
             if note not in timestep:
                 pitch, velocity = inv_tokens[int(note)]
                 start = timing[0] / timestep_resolution
-                duration = timing / timestep_resolution
+                duration = timing[1] / timestep_resolution
                 new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
                 inst.notes.append(new_note)
                 notesToRemove.append(note)

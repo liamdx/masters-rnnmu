@@ -55,19 +55,18 @@ def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
     model = Sequential()
     model.add(
         LSTM(
-            units=128, input_shape=(sequence_length, 10), return_sequences=True, dropout=0.1, recurrent_dropout=0.1
+            units=128, input_shape=(sequence_length, 10), return_sequences=True, dropout=0.3, recurrent_dropout=0.3
         )
     )
     model.add(Conv1D(filters=8, kernel_size=3, padding="same", activation="sigmoid"))
     model.add(MaxPooling1D(pool_size=2))
-    model.add(Dense(256, activation = "sigmoid"))
-    model.add(LSTM(32, return_sequences=True, dropout=0.1, recurrent_dropout=0.1))
+    model.add(LSTM(64, return_sequences=True, dropout=0.3, recurrent_dropout=0.3))
     model.add(Dense(128, activation = "relu"))
-    model.add(LSTM(32, dropout=0.1, recurrent_dropout=0.1))
+    model.add(LSTM(32, dropout=0.3, recurrent_dropout=0.3))
     model.add(Dense(64, activation="relu"))
     model.add(Dense(10, activation = "relu"))
     model_optimizer = adam(lr=_learning_rate)
-    #model_optimizer = iRprop_()
+    # model_optimizer = iRprop_()
     model.compile(
         loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
     )
