@@ -27,10 +27,10 @@ def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
 
     return preds
 
-def startTokenizedNetworkRun(model, sequence, sequence_length, secondsOfMusic):
+def startTokenizedNetworkRun(model, sequence, timestep_resolution, secondsOfMusic):
     preds = []
     sample = copy.deepcopy(sequence)
-    length__ = int(sequence_length * secondsOfMusic)
+    length__ = int(timestep_resolution * secondsOfMusic)
     print("Composing: Genius at work")
     for i in tqdm(range(length__)):
         pred = model.predict(sample)

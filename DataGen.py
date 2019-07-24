@@ -357,7 +357,7 @@ def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
     lastNoteStart, timestepCounter = (0, 0)
     # what notes are currently being played
     current_notes = {}
-
+    timestep_resolution * data
     for timestep in data:
         for event in timestep:
             # if we encounter a new note 
@@ -387,42 +387,47 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
     inv_tokens = dict((v,k) for k,v in tokens.items())
-    lastNoteStart, timestepCounter = (0, 0)
+    timestepCounter = 0
     # what notes are currently being played
     current_notes = {}
-
-    data = data * len(tokens)
-
-    for timestep in data:
-        for event in timestep:
-            # if we encounter a new note 
-            for msg in event:
+    # unnormalize the data at each step
+    for d in tqdm(data):
+        for timestep in d:
+           # for all notes in this timestep
+            for msg in timestep:
+                 # if we encounter a new note start counting its duration
                 if msg not in current_notes:
-                    current_notes[msg] = [timestepCounter, 1]
+                    current_notes[msg] = [] 
+                    current_notes[msg].append(timestepCounter)
+                    current_notes[msg].append(1)
                 else:
                     current_notes[msg][1] += 1
-           # if any of the currently playing notes are not
-        # being played at this timestep, remove it from current notes7
-        notesToRemove = []
-        for note, timing in current_notes.items():
-            if note not in timestep:
-                pitch, velocity = inv_tokens[int(note)]
-                start = timing[0] / timestep_resolution
-                duration = timing[1] / timestep_resolution
-                new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
-                inst.notes.append(new_note)
-                notesToRemove.append(note)
+            # if any of the currently playing notes are not
+            # being played at this timestep, remove it from current notes7
+            notesToRemove = []
+            for note, timing in current_notes.items():
+                if note not in timestep:
+                   print("Logic is sound, this is being called :) ")
+                   pitch, velocity = inv_tokens[int(note)]
+                   start = timing[0] / timestep_resolution
+                   duration = timing[1] / timestep_resolution
+                   print("Note start time = %d, note duration = %d" % (start, duration))
+                   new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+                   inst.notes.append(new_note)
+                   notesToRemove.append(note)
         
-        for note in notesToRemove:
-            current_notes.pop(note)
+            for note in notesToRemove:
+                current_notes.pop(note)
 
-        timestepCounter += 1
+            timestepCounter += 1
+        
     
     if bool(current_notes) == True:
         for note, timing in current_notes.items():
             pitch, velocity = inv_tokens[int(note)]
             start = timing[0] / timestep_resolution
             duration = timing[1] / timestep_resolution
+            print("Note start time = %d, note duration = %d" % (start, duration))
             new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
             inst.notes.append(new_note)
     

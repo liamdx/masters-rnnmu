@@ -10,8 +10,8 @@ from keras.preprocessing import sequence
 start_time = time.process_time()
 
 # Network parameters
-learning_rate = 0.3
-batch_size = 480
+learning_rate = 0.0001
+batch_size = 120
 epochs = 2
 
 # data parameters
@@ -22,7 +22,7 @@ dataset = "maestro"
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[:300])
+midi_data, key_distributions = loadMidiData(filepaths[:50])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -30,7 +30,7 @@ data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
 
 # convert to normalized form for network training
 processedData, processedLabels, tokens = processKerasDataTokenized(
-    data, sequence_length, composition_length * timestep_resolution , timestep_resolution
+    data, batch_size, composition_length * timestep_resolution , timestep_resolution
 )
 # no longer need unscaled data
 del data, midi_data
@@ -46,8 +46,8 @@ print(
     % ((time.process_time() - start_time) / 60.0)
 )
 # Begin training the neural network based on the above parameters
-model, filename = runTokenNetwork2(
-    trainX, testX, trainY, testY, learning_rate, batch_size, epochs, sequence_length
+model, filename = runTokenNetwork3(
+    trainX, testX, trainY, testY, learning_rate, batch_size, epochs, batch_size
 )
 
 
@@ -72,7 +72,7 @@ for i in range(1):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 1]
     # Use network to generate some notes
-    composition = startTokenizedNetworkRun(loaded_model, sample, timestep_resolution * composition_length, 0.5)
+    composition = startTokenizedNetworkRun(loaded_model, sample, timestep_resolution, 8)
     # Output to .midi file
     convertTokenizedDataToMidi2(composition, tokens, filename, timestep_resolution)    
 

@@ -3,7 +3,7 @@ import keras
 from keras.callbacks import TensorBoard
 from keras.datasets import imdb
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D, Conv2D, MaxPooling2D
+from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D, Conv2D, MaxPooling2D, CuDNNGRU
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
@@ -58,8 +58,6 @@ def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
             units=128, input_shape=(sequence_length, 10), return_sequences=True, dropout=0.3, recurrent_dropout=0.3
         )
     )
-    model.add(Conv1D(filters=8, kernel_size=3, padding="same", activation="sigmoid"))
-    model.add(MaxPooling1D(pool_size=2))
     model.add(LSTM(64, return_sequences=True, dropout=0.3, recurrent_dropout=0.3))
     model.add(Dense(128, activation = "relu"))
     model.add(LSTM(32, dropout=0.3, recurrent_dropout=0.3))
@@ -83,7 +81,49 @@ def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
     )
 
     directory = "debug/models/"
-    filename = "token-test-{date:%Y-%m-%d-%H-%M-%S}".format(
+    filename = "token-c2-test-{date:%Y-%m-%d-%H-%M-%S}".format(
+        date=datetime.datetime.now()
+    )
+
+    model.save(directory + filename + ".h5")
+
+    return model, filename
+
+
+def runTokenNetwork3(trainX, testX, trainY, testY,  _learning_rate,
+    _batch_size, _epochs, sequence_length
+        ):
+    
+    model = Sequential()
+    model.add(
+        CuDNNGRU(
+            units=128, input_shape=(sequence_length, 10), return_sequences=True
+        )
+    )
+    model.add(Dense(128, activation = "elu"))
+    model.add(CuDNNGRU(units=64, return_sequences=True))
+    model.add(Dense(64, activation="elu"))
+    model.add(CuDNNGRU(units=32))
+    model.add(Dense(10, activation = "elu"))
+    model_optimizer = adam(lr=_learning_rate)
+    # model_optimizer = iRprop_()
+    model.compile(
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
+    )
+
+    model.summary()
+
+    print("Network.py: Beginning model training")
+    model.fit(
+        trainX,
+        trainY,
+        validation_data=(testX, testY),
+        epochs=_epochs,
+        batch_size=_batch_size,
+    )
+
+    directory = "debug/models/"
+    filename = "token-c3-test-{date:%Y-%m-%d-%H-%M-%S}".format(
         date=datetime.datetime.now()
     )
 
