@@ -13,6 +13,9 @@ start_time = time.process_time()
 learning_rate = 0.01
 batch_size = 64
 epochs = 2
+
+# data parameters
+timestep_resolution = 60
 sequence_length = 240
 dataset = "classical"
 
@@ -71,5 +74,5 @@ for i in range(1):
     # Use network to generate some notes
     composition = startTokenizedNetworkRun(loaded_model, sample, sequence_length, 1)
     # Output to .midi file
-    convertTokenizedDataToMidi2(composition, tokens, filename, 60)    
+    convertTokenizedDataToMidi2(composition, tokens, "verydebugyes", 60)    
 
