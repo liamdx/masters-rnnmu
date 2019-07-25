@@ -97,16 +97,16 @@ def runTokenNetwork3(trainX, testX, trainY, testY,  _learning_rate,
     model = Sequential()
     model.add(
         CuDNNGRU(
-            units=128, input_shape=(sequence_length, 10), return_sequences=True
+            units=100, input_shape=(sequence_length, 10), return_sequences=True
         )
     )
-    model.add(Dense(128, activation = "elu"))
-    model.add(CuDNNGRU(units=64, return_sequences=True))
-    model.add(Dense(64, activation="elu"))
-    model.add(CuDNNGRU(units=32))
-    model.add(Dense(10, activation = "elu"))
+    model.add(Dropout(0.3))
+    model.add(Conv2D(filters=32, kernel_size=3, padding="same", activation="elu"))
+    model.add(MaxPooling2D(pool_size=2))
+    model.add(CuDNNGRU(50))
+    model.add(Dense(100, activation="elu"))
+    model.add(Dense(10, activation="elu"))
     model_optimizer = adam(lr=_learning_rate)
-    # model_optimizer = iRprop_()
     model.compile(
         loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
     )
@@ -131,6 +131,48 @@ def runTokenNetwork3(trainX, testX, trainY, testY,  _learning_rate,
 
     return model, filename
     
+def runTokenNetwork4(trainX, testX, trainY, testY,  _learning_rate,
+    _batch_size, _epochs, sequence_length, tokens
+        ):
+    
+    model = Sequential()
+    model.add(
+        CuDNNGRU(
+            units=256, input_shape=(sequence_length, 10), return_sequences=True
+        )
+    )
+    model.add(Dropout(0.3))
+    model.add(CuDNNGRU(512, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(CuDNNGRU(256))
+    model.add(Dense(256, activation="elu"))
+    model.add(Dropout(0.3))
+    model.add(Dense(len(tokens), activation="elu"))
+    model.add(Dense(10, activation="elu"))
+    model_optimizer = adam(lr=_learning_rate)
+    model.compile(
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
+    )
+
+    model.summary()
+
+    print("Network.py: Beginning model training")
+    model.fit(
+        trainX,
+        trainY,
+        validation_data=(testX, testY),
+        epochs=_epochs,
+        batch_size=_batch_size,
+    )
+
+    directory = "debug/models/"
+    filename = "token-c3-test-{date:%Y-%m-%d-%H-%M-%S}".format(
+        date=datetime.datetime.now()
+    )
+
+    model.save(directory + filename + ".h5")
+
+    return model, filename
     
 
 def runTokenizedNetwork(
@@ -171,7 +213,7 @@ def runTokenizedNetwork(
     filename = "token-test-{date:%Y-%m-%d-%H-%M-%S}".format(
         date=datetime.datetime.now()
     )
-
+    
     model.save(directory + filename + ".h5")
 
     return model, trainX, trainY, testX, testY

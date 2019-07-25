@@ -235,15 +235,15 @@ def processKerasDataTokenized(data, sequence_size, num_timesteps, timestep_resol
             song_train.append(lastNotes)
         x.append(song_train)
     
+    print("...Done\n")
+    # debug to not break compatibility
+    return x, y , tokens
+            
+def finaliseTokenNetworkData(x,y):
     print("Finalising network data")
     X = np.concatenate(x)
     Y = np.vstack(y)
-    print("...Done\n")
-    # debug to not break compatibility
-    return X, Y , tokens
-            
-
-
+    return(X, Y)
 def distance(a, b):
     if a > b:
         return a - b
@@ -407,11 +407,11 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
             notesToRemove = []
             for note, timing in current_notes.items():
                 if note not in timestep:
-                   print("Logic is sound, this is being called :) ")
-                   pitch, velocity = inv_tokens[int(note)]
+                   # print("Logic is sound, this is being called :) ")
+                   pitch, velocity = inv_tokens[abs(int(note))]
                    start = timing[0] / timestep_resolution
                    duration = timing[1] / timestep_resolution
-                   print("Note start time = %d, note duration = %d" % (start, duration))
+                   # print("Note start time = %d, note duration = %d" % (start, duration))
                    new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
                    inst.notes.append(new_note)
                    notesToRemove.append(note)
@@ -424,10 +424,10 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
     
     if bool(current_notes) == True:
         for note, timing in current_notes.items():
-            pitch, velocity = inv_tokens[int(note)]
+            pitch, velocity = inv_tokens[abs(int(note))]
             start = timing[0] / timestep_resolution
             duration = timing[1] / timestep_resolution
-            print("Note start time = %d, note duration = %d" % (start, duration))
+            # print("Note start time = %d, note duration = %d" % (start, duration))
             new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
             inst.notes.append(new_note)
     
