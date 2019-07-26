@@ -23,7 +23,7 @@ sequence_length = 240
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths)
+midi_data, key_distributions = loadMidiData(filepaths[:100])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
