@@ -132,26 +132,28 @@ def runTokenNetwork3(trainX, testX, trainY, testY,  _learning_rate,
     return model, filename
     
 def runTokenNetwork4(trainX, testX, trainY, testY,  _learning_rate,
-    _batch_size, _epochs, sequence_length, tokens
+    _batch_size, _epochs, sequence_length, tokens, num_simultaneous_notes
         ):
     
     model = Sequential()
     model.add(
         CuDNNGRU(
-            units=256, input_shape=(sequence_length, 10), return_sequences=True
+            units=256, input_shape=(sequence_length, num_simultaneous_notes), return_sequences=True
         )
     )
     model.add(Dropout(0.3))
     model.add(CuDNNGRU(512, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(CuDNNGRU(960))
-    model.add(Dense(960, activation="elu"))
+    model.add(CuDNNGRU(sequence_length, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(Dense(sequence_length, activation="elu"))
+    model.add(CuDNNGRU(len(tokens)))
     model.add(Dropout(0.3))
     model.add(Dense(len(tokens), activation="elu"))
-    model.add(Dense(10, activation="elu"))
+    model.add(Dense(num_simultaneous_notes, activation="elu"))
     model_optimizer = adam(lr=_learning_rate)
     model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae",]
     )
 
     model.summary()

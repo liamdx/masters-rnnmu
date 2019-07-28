@@ -10,8 +10,8 @@ from keras.preprocessing import sequence
 start_time = time.process_time()
 
 # Network parameters
-learning_rate = 0.00001
-batch_size = 64
+learning_rate = 0.00005
+batch_size = 128
 epochs = 10
 
 # data parameters
@@ -19,20 +19,19 @@ timestep_resolution = 30
 composition_length = 32
 dataset = "classical"
 sequence_length = 240
+num_simultaneous_notes = 8
 
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[:100])
+midi_data, key_distributions = loadMidiData(filepaths)
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
 
-# no longer need original data, free the memory
-
 # convert to normalized form for network training
 processedData, processedLabels, tokens = processKerasDataTokenized(
-    data, sequence_length, composition_length * timestep_resolution , timestep_resolution
+    data, sequence_length, composition_length * timestep_resolution , timestep_resolution, num_simultaneous_notes
 )
 # no longer need unscaled data
 del data
@@ -57,17 +56,15 @@ print(
 
 # Begin training the neural network based on the above parameters
 model, filename = runTokenNetwork4(
-    trainX, testX, trainY, testY, learning_rate, batch_size, epochs, sequence_length, tokens
+    trainX, testX, trainY, testY, learning_rate, batch_size, epochs, sequence_length, tokens, num_simultaneous_notes
 )
 
 
-# filename = "token-c3-test-2019-07-24-22-25-05"
+# filename = "token-c3-test-2019-07-27-15-47-06"
 # Load a pretrained model and generate some music
 loaded_model = loadModel(filename + ".h5")
 loaded_model.summary()
 
-# null token
-tokens[(0,0)] = 0
 
 # take some test data
 tempData = copy.deepcopy(testX)
@@ -82,7 +79,7 @@ for i in range(10):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 1]
     # Use network to generate some notes
-    composition = startTokenizedNetworkRun(loaded_model, sample, timestep_resolution, 32)
+    composition = startTokenizedNetworkRun(loaded_model, sample, timestep_resolution, 16)
     # Output to .midi file
     convertTokenizedDataToMidi2(composition, tokens, filename, timestep_resolution)    
 
