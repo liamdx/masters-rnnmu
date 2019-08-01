@@ -1,6 +1,6 @@
 import pretty_midi
 import librosa.display
-
+import xmltodict
 
 def getInstrumentType(instrument):
     programId = instrument.program
@@ -50,3 +50,10 @@ def plot_piano_roll(pm, start_pitch=0, end_pitch=127, fs=120):
         y_axis="cqt_note",
         fmin=pretty_midi.note_number_to_hz(start_pitch),
     )
+
+
+def parseAnalysisData(filepath):
+    with open(filepath) as fd:
+        doc = xmltodict.parse(fd.read())
+        return(doc)
+    return(FileNotFoundError)

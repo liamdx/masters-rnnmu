@@ -13,15 +13,15 @@ start_time = time.process_time()
 
 # Network parameters
 learning_rate = 0.00005
-batch_size = 64
+batch_size = 128
 epochs = 2
-sequence_length = 50
+sequence_length = 30
 dataset = "classical"
 
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths)
+midi_data, key_distributions = loadMidiData(filepaths[:200])
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
@@ -44,14 +44,14 @@ print(
 )
 
 # Begin training the neural network based on the above parameters
-model = runNormalizedNetwork(
+model, filename = runNormalizedNetwork2(
     trainX, testX, trainY, testY, sequence_length, learning_rate, batch_size, epochs
 )
 
 
 # Load a pretrained model and generate some music
-loaded_model_name = "norm-test-2019-07-11-18-25-57"
-loaded_model = loadModel(loaded_model_name + ".h5")
+# filename = "norm-test-2019-07-28-13-27-26"
+loaded_model = loadModel(filename + ".h5")
 
 
 # take some test data
@@ -70,4 +70,4 @@ for i in range(15):
     # Use network to generate some notes
     composition = startNormalizedNetworkRun(loaded_model, sample, sequence_length, 150)
     # Output to .midi file
-    convertNormalizedDataToMidi(composition, timeScalars, loaded_model_name)
+    convertNormalizedDataToMidi(composition, timeScalars, filename)
