@@ -13,7 +13,7 @@ from util.rnnmu_utils import similar
 from tqdm import tqdm
 import collections
 import operator
-
+import mido
 
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
@@ -42,8 +42,19 @@ def getCleanedFilePaths(dataset):
 
     return cleanfiles
 
+# pretty midi object 
+def limitMidiOctaves(pm, min, max):
+    for note in pm.instruments[0].notes:
+        while note.pitch < min or note.pitch > max:
+            if note.pitch > max:
+                # subtract an octave
+                note.pitch = note.pitch - 12
+            elif note.pitch < min:
+                # add an octave
+                note.pitch = note.pitch + 12
 
-def loadMidiData(cleanfiles):
+
+def loadMidiData(cleanfiles, minOctave, maxOctave):
     print("Loading Midifiles")
     midifiles = {}
     key_distributions = {}
@@ -51,6 +62,7 @@ def loadMidiData(cleanfiles):
     for c in tqdm(cleanfiles):
         try:
             mid = pretty_midi.PrettyMIDI(c)
+            limitMidiOctaves(mid, minOctave, maxOctave)
             midifiles[c] = mid
             total_velocity = sum(sum(mid.get_chroma()))
             key_weight_distribution = [

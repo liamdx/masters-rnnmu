@@ -91,6 +91,9 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
 
     model.summary()
 
+    a = datetime.datetime.now()
+    timestamp = "%s%s%s%s%s" % (a.second, a.minute, a.hour, a.day, a.month)
+
     print("Network.py: Beginning model training")
     model.fit(
         trainX,
@@ -103,7 +106,8 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
     directory = "debug/models/"
     # properties are: dataset, learning rate, batch size, epochs, sequence length,
     # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
-    filename = "Token-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d" % (
+    
+    filename = "Token-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
         params["dataset"],
         params["learning_rate"],
         params["batch_size"],
@@ -114,6 +118,7 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
         params["timestep_resolution"],
         params["composition_length"],
         params["data_amount"],
+        timestamp
     )
 
     model.save(directory + filename + ".h5")
