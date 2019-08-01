@@ -3,18 +3,32 @@ import keras
 from keras.callbacks import TensorBoard
 from keras.datasets import imdb
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Flatten, Activation, Input, Dropout, Conv1D, MaxPooling1D, Conv2D, MaxPooling2D, CuDNNGRU
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.losses import categorical_crossentropy
-from keras.optimizers import adam
+from keras.optimizers import adam, adadelta
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
 import datetime
 import json
 import numpy as np
-from util.rprop import * 
+from util.rprop import *
+from keras.layers import (
+    Dense,
+    LSTM,
+    Flatten,
+    Activation,
+    Input,
+    Dropout,
+    Conv1D,
+    MaxPooling1D,
+    Conv2D,
+    MaxPooling2D,
+    CuDNNGRU,
+    CuDNNLSTM,
+)
+
 
 def genNormalizedNetworkData(processedData, processedLabels):
     print("Performing train-test split")
@@ -48,112 +62,31 @@ def evaluate(model, train_x, train_y, test_x, test_y):
         )
     )
 
-def runTokenNetwork2(trainX, testX, trainY, testY,  _learning_rate,
-    _batch_size, _epochs, sequence_length
-        ):
-    
+
+def TokenC1(trainX, testX, trainY, testY, tokens, params):
+
     model = Sequential()
     model.add(
-        LSTM(
-            units=128, input_shape=(sequence_length, 10), return_sequences=True, dropout=0.3, recurrent_dropout=0.3
+        CuDNNLSTM(
+            units=512,
+            input_shape=(params["sequence_length"], params["num_simultaneous_notes"]),
+            return_sequences=True,
         )
     )
-    model.add(LSTM(64, return_sequences=True, dropout=0.3, recurrent_dropout=0.3))
-    model.add(Dense(128, activation = "relu"))
-    model.add(LSTM(32, dropout=0.3, recurrent_dropout=0.3))
-    model.add(Dense(64, activation="relu"))
-    model.add(Dense(10, activation = "relu"))
-    model_optimizer = adam(lr=_learning_rate)
-    # model_optimizer = iRprop_()
-    model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
-    )
-
-    model.summary()
-
-    print("Network.py: Beginning model training")
-    model.fit(
-        trainX,
-        trainY,
-        validation_data=(testX, testY),
-        epochs=_epochs,
-        batch_size=_batch_size,
-    )
-
-    directory = "debug/models/"
-    filename = "token-c2-test-{date:%Y-%m-%d-%H-%M-%S}".format(
-        date=datetime.datetime.now()
-    )
-
-    model.save(directory + filename + ".h5")
-
-    return model, filename
-
-
-def runTokenNetwork3(trainX, testX, trainY, testY,  _learning_rate,
-    _batch_size, _epochs, sequence_length
-        ):
-    
-    model = Sequential()
-    model.add(
-        CuDNNGRU(
-            units=100, input_shape=(sequence_length, 10), return_sequences=True
-        )
-    )
+    model.add(Dropout(0.4))
+    model.add(CuDNNLSTM(512, return_sequences=True))
+    model.add(Dropout(0.4))
+    model.add(Dense(512, activation="elu"))
+    model.add(CuDNNLSTM(params["sequence_length"], return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(Conv2D(filters=32, kernel_size=3, padding="same", activation="elu"))
-    model.add(MaxPooling2D(pool_size=2))
-    model.add(CuDNNGRU(50))
-    model.add(Dense(100, activation="elu"))
-    model.add(Dense(10, activation="elu"))
-    model_optimizer = adam(lr=_learning_rate)
-    model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae",]
-    )
-
-    model.summary()
-
-    print("Network.py: Beginning model training")
-    model.fit(
-        trainX,
-        trainY,
-        validation_data=(testX, testY),
-        epochs=_epochs,
-        batch_size=_batch_size,
-    )
-
-    directory = "debug/models/"
-    filename = "token-c3-test-{date:%Y-%m-%d-%H-%M-%S}".format(
-        date=datetime.datetime.now()
-    )
-
-    model.save(directory + filename + ".h5")
-
-    return model, filename
-    
-def runTokenNetwork4(trainX, testX, trainY, testY,  _learning_rate,
-    _batch_size, _epochs, sequence_length, tokens, num_simultaneous_notes
-        ):
-    
-    model = Sequential()
-    model.add(
-        CuDNNGRU(
-            units=256, input_shape=(sequence_length, num_simultaneous_notes), return_sequences=True
-        )
-    )
-    model.add(Dropout(0.3))
-    model.add(CuDNNGRU(512, return_sequences=True))
-    model.add(Dropout(0.3))
-    model.add(CuDNNGRU(sequence_length, return_sequences=True))
-    model.add(Dropout(0.3))
-    model.add(Dense(sequence_length, activation="elu"))
-    model.add(CuDNNGRU(len(tokens)))
+    model.add(Dense(params["sequence_length"], activation="elu"))
+    model.add(CuDNNLSTM(len(tokens)))
     model.add(Dropout(0.3))
     model.add(Dense(len(tokens), activation="elu"))
-    model.add(Dense(num_simultaneous_notes, activation="elu"))
-    model_optimizer = adam(lr=_learning_rate)
+    model.add(Dense(params["num_simultaneous_notes"], activation="elu"))
+    model_optimizer = adam(lr=params["learning_rate"])
     model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae",]
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae", "acc"]
     )
 
     model.summary()
@@ -163,62 +96,29 @@ def runTokenNetwork4(trainX, testX, trainY, testY,  _learning_rate,
         trainX,
         trainY,
         validation_data=(testX, testY),
-        epochs=_epochs,
-        batch_size=_batch_size,
+        epochs=params["epochs"],
+        batch_size=params["batch_size"],
     )
 
     directory = "debug/models/"
-    filename = "token-c3-test-{date:%Y-%m-%d-%H-%M-%S}".format(
-        date=datetime.datetime.now()
+    # properties are: dataset, learning rate, batch size, epochs, sequence length,
+    # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
+    filename = "Token-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d" % (
+        params["dataset"],
+        params["learning_rate"],
+        params["batch_size"],
+        params["epochs"],
+        params["sequence_length"],
+        len(tokens),
+        params["num_simultaneous_notes"],
+        params["timestep_resolution"],
+        params["composition_length"],
+        params["data_amount"],
     )
 
     model.save(directory + filename + ".h5")
 
     return model, filename
-    
-
-def runTokenizedNetwork(
-    trainX, testX, trainY, testY, sequence_length, _learning_rate,
-    _batch_size, _epochs
-):
-    num_features = 4
-    embedding_vecor_length = 128
-
-
-    model = Sequential()
-    model.add(Embedding(512, embedding_vecor_length, input_length=sequence_length))
-    model.add(LSTM(200, return_sequences=True))
-    model.add(Dropout(0.3))
-    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="elu"))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(LSTM(100))
-    model.add(Dropout(0.2))
-    model.add(Dense(128, activation="elu"))
-    model.add(Dense(4, activation = "elu"))
-    model_optimizer = adam(lr=_learning_rate)
-    model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy" , "mae", "categorical_accuracy"]
-    )
-
-    model.summary()
-
-    print("Network.py: Beginning model training")
-    model.fit(
-        trainX,
-        trainY,
-        validation_data=(testX, testY),
-        epochs=_epochs,
-        batch_size=_batch_size,
-    )
-
-    directory = "debug/models/"
-    filename = "token-test-{date:%Y-%m-%d-%H-%M-%S}".format(
-        date=datetime.datetime.now()
-    )
-    
-    model.save(directory + filename + ".h5")
-
-    return model, trainX, trainY, testX, testY
 
 
 def runNormalizedNetwork(
@@ -230,7 +130,9 @@ def runNormalizedNetwork(
     model = Sequential()
     model.add(
         LSTM(
-            units=256, input_shape=(sequence_length, num_features), return_sequences=True
+            units=256,
+            input_shape=(sequence_length, num_features),
+            return_sequences=True,
         )
     )
     model.add(Dropout(0.3))
@@ -238,12 +140,14 @@ def runNormalizedNetwork(
     model.add(Dense(256, activation="relu"))
     model.add(LSTM(128))
     model.add(Dropout(0.15))
-    model.add(Dense(128,activation="relu"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dense(4, activation="sigmoid"))
 
     model_optimizer = adam(lr=_learning_rate)
     model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["accuracy", "mae"]
+        loss="mean_squared_error",
+        optimizer=model_optimizer,
+        metrics=["accuracy", "mae"],
     )
 
     model.summary()

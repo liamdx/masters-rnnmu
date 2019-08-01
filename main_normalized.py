@@ -2,6 +2,7 @@ from DataGen import *
 from DataAnalysis import *
 from Network import *
 from NetworkRun import *
+
 #  from util.tensorflow_utils import *
 import copy
 import time

@@ -26,8 +26,7 @@ songs = []
 songPlaying = False
 
 
-while(not ctx.should_close()):
-        with ctx:
-                if(bimpy.button("Button", bimpy.Vec2(90,40))):
-                    print("Ya wee shite")
-                
+while not ctx.should_close():
+    with ctx:
+        if bimpy.button("Button", bimpy.Vec2(90, 40)):
+            print("Ya wee shite")

@@ -25,7 +25,6 @@ def getCleanedFilePaths(dataset):
             allfiles.append(f)
 
     cleanfiles = []
-    numFiles = len(allfiles)
     counter = 0
     lastfile = ""
 
@@ -33,17 +32,15 @@ def getCleanedFilePaths(dataset):
     print("Removing Duplicates")
 
     for f in tqdm(allfiles):
-
-        currentSimilarityRatio = 0
         currentSimilarityRatio = similar(lastfile, f)
 
-        if currentSimilarityRatio < 0.9:
+        if "_format0" not in f:
             cleanfiles.append(f)
 
         lastfile = f
         counter += 1
 
-    return allfiles
+    return cleanfiles
 
 
 def loadMidiData(cleanfiles):
@@ -182,8 +179,10 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
     return (np.array(newNotes), np.array(newLabels))
 
 
-def processKerasDataTokenized(data, sequence_size, num_timesteps, timestep_resolution, num_simultaneous_notes):
-    processedData = [] 
+def processKerasDataTokenized(
+    data, sequence_size, num_timesteps, timestep_resolution, num_simultaneous_notes
+):
+    processedData = []
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
         data
     )
@@ -208,7 +207,7 @@ def processKerasDataTokenized(data, sequence_size, num_timesteps, timestep_resol
             note_duration = int(timestep_resolution * duration)
             note_start = int((lastStartTime) * timestep_resolution)
 
-            if (note_start + note_duration >= num_timesteps):
+            if note_start + note_duration >= num_timesteps:
                 break
             else:
                 # place the note
@@ -219,40 +218,42 @@ def processKerasDataTokenized(data, sequence_size, num_timesteps, timestep_resol
                             song_data[note_start + i][j] = note_token
                             break
         y.append(song_data)
-    
+
     x = []
     for song in tqdm(y):
         song_train = []
         for i in range(len(song)):
-            if(i < sequence_size):
+            if i < sequence_size:
                 i = sequence_size
-            
+
             lastNotes = []
             for j in range(sequence_size):
                 lastNotes.append(song[i - j])
             song_train.append(lastNotes)
         x.append(song_train)
-    
+
     print("...Done\n")
     # debug to not break compatibility
-    return x, y , tokens
+    return x, y, tokens
 
 
 def getNoteToken(notePitch, noteVelocity, tokens, velocities):
-    inv_tokens = dict((v,k) for k,v in tokens.items())
+    inv_tokens = dict((v, k) for k, v in tokens.items())
     if (notePitch, noteVelocity) in tokens.values():
-        return (inv_tokens[(notePitch, noteVelocity)])
+        return inv_tokens[(notePitch, noteVelocity)]
     else:
         # find the veocity with the minimum distance from current velocityy
-        nearestVelocity = min(velocities, key=lambda x:abs(x-noteVelocity))
-        return(inv_tokens[(notePitch, nearestVelocity)])
+        nearestVelocity = min(velocities, key=lambda x: abs(x - noteVelocity))
+        return inv_tokens[(notePitch, nearestVelocity)]
 
 
-def finaliseTokenNetworkData(x,y):
+def finaliseTokenNetworkData(x, y):
     print("Finalising network data")
     X = np.concatenate(x)
     Y = np.vstack(y)
-    return(X, Y)
+    return (X, Y)
+
+
 def distance(a, b):
     if a > b:
         return a - b
@@ -270,11 +271,12 @@ def getTokens(pitch_occurences, velocity_occurences):
             currentCombination = (pitch, velocity)
             tokens[currentCombination] = counter
             counter += 1
-    return(tokens)
+    return tokens
+
 
 def getTokens2(pitch_occurences, velocity_occurences, max_tokens):
     tokens = {}
-    tokens[0] = (0,0)
+    tokens[0] = (0, 0)
     maxVelocitiesPerPitch = 4
     counter = 1
     velocities = []
@@ -289,7 +291,8 @@ def getTokens2(pitch_occurences, velocity_occurences, max_tokens):
     for i in range(maxVelocitiesPerPitch):
         velocities.append(int(128 / (j + 1)))
 
-    return(tokens, velocities)
+    return (tokens, velocities)
+
 
 def countTokenOccurences(data):
     note_pitches = collections.OrderedDict()
@@ -377,6 +380,7 @@ def convertNormalizedDataToMidi(notes, timeScalars, model_name):
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
+
 def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
@@ -387,7 +391,7 @@ def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
     timestep_resolution * data
     for timestep in data:
         for event in timestep:
-            # if we encounter a new note 
+            # if we encounter a new note
             print("Event Type = ")
             print(type(event))
             if event not in current_notes:
@@ -401,19 +405,22 @@ def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
                     pitch, velocity = tokens[note]
                     start = timing[0] / timestep_resolution
                     duration = timing / timestep_resolution
-                    new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+                    new_note = pretty_midi.Note(
+                        velocity, pitch, start, start + duration
+                    )
                     inst.notes.append(new_note)
                     current_notes.pop(note)
         timestepCounter += 1
-    
+
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
+
 
 def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
-    inv_tokens = dict((v,k) for k,v in tokens.items())
+    inv_tokens = dict((v, k) for k, v in tokens.items())
     normalizer = 1
     timestepCounter = 0
     # what notes are currently being played
@@ -421,12 +428,12 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
     # unnormalize the data at each step
     for d in tqdm(data):
         for timestep in d:
-           # for all notes in this timestep
+            # for all notes in this timestep
             rounded_timestep = [round(x) for x in timestep]
             for msg in rounded_timestep:
-                 # if we encounter a new note start counting its duration
+                # if we encounter a new note start counting its duration
                 if msg not in current_notes:
-                    current_notes[msg] = [] 
+                    current_notes[msg] = []
                     current_notes[msg].append(timestepCounter)
                     current_notes[msg].append(1)
                 else:
@@ -436,52 +443,54 @@ def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
             notesToRemove = []
             for note, timing in current_notes.items():
                 if note not in rounded_timestep:
-                   # print("Logic is sound, this is being called :) ")
-                   currentToken = abs(int(note * normalizer))
-                   if note >= 1:
+                    # print("Logic is sound, this is being called :) ")
+                    currentToken = abs(int(note * normalizer))
+                    if note >= 1:
                         pitch, velocity = tokens[currentToken]
                         if pitch > 127:
-                           pitch = np.uint8(127)
+                            pitch = np.uint8(127)
                         if velocity > 127:
-                           velocity = np.uint8(127)
+                            velocity = np.uint8(127)
                         start = timing[0] / timestep_resolution
                         duration = timing[1] / timestep_resolution
                         # print("Note start time = %d, note duration = %d" % (start, duration))
-                        new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
+                        new_note = pretty_midi.Note(
+                            velocity, pitch, start, start + duration
+                        )
                         inst.notes.append(new_note)
-                        notesToRemove.append(note)                   
-        
+                        notesToRemove.append(note)
+
             for note in notesToRemove:
                 current_notes.pop(note)
 
             timestepCounter += 1
-        
-    
+
     if bool(current_notes) == True:
         for note, timing in current_notes.items():
             currentToken = abs(int(note * normalizer))
             if currentToken != 0:
                 pitch, velocity = tokens[currentToken]
                 if pitch > 127:
-                   pitch = np.uint8(127)
+                    pitch = np.uint8(127)
                 if velocity > 127:
-                   velocity = np.uint8(127)
+                    velocity = np.uint8(127)
                 start = timing[0] / timestep_resolution
                 duration = timing[1] / timestep_resolution
                 # print("Note start time = %d, note duration = %d" % (start, duration))
                 new_note = pretty_midi.Note(velocity, pitch, start, start + duration)
                 inst.notes.append(new_note)
-    
+
     del current_notes
     print("total number of notes = %d" % len(inst.notes))
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
-    
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
+
 
 def getMidiRunName(model_name):
     directory = "debug/midi/" + model_name
