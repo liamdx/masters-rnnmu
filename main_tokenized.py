@@ -10,15 +10,15 @@ from keras.utils import plot_model
 
 # parameter dictionary
 params = {}
-params["learning_rate"] = 0.000001
+params["learning_rate"] = 0.00003
 params["batch_size"] = 128
-params["epochs"] = 4
+params["epochs"] = 8
 params["timestep_resolution"] = 15
 params["composition_length"] = 32
 params["dataset"] = "classical"
 params["sequence_length"] = 150
 params["num_simultaneous_notes"] = 4
-params["data_amount"] = 0.3
+params["data_amount"] = 0.2
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
