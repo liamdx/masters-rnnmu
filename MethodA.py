@@ -1,5 +1,5 @@
 from DataGen import *
-from DataAnalysis import *
+from DataAnalysisHelpers import *
 from Network import *
 from NetworkRun import *
 
@@ -8,28 +8,33 @@ import copy
 import time
 import random
 
-# debug timing how long dataset takes to load
-start_time = time.process_time()
-
-# Network parameters
-learning_rate = 0.00005
-batch_size = 128
-epochs = 2
-sequence_length = 30
-dataset = "classical"
-
+# parameter dictionary
+params = {}
+params["learning_rate"] = 0.00003
+params["batch_size"] = 128
+params["epochs"] = 8
+params["timestep_resolution"] = 15
+params["composition_length"] = 32
+params["dataset"] = "classical"
+params["sequence_length"] = 15
+params["num_simultaneous_notes"] = 4
+params["data_amount"] = 0.2
 
 # get the filepaths and load for all .midi files in the dataset
-filepaths = getCleanedFilePaths(dataset)
-midi_data, key_distributions = loadMidiData(filepaths[:200])
+filepaths = getCleanedFilePaths(params["dataset"])
+# load appropriate amount of dataset in
+# limit the notes to the range c3 - c6 (3 full octaves)
+midi_data, key_distributions = loadMidiData(
+    filepaths[: int(len(filepaths) * params["data_amount"]) - 1], 48, 83
+)
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
 del midi_data  # no longer need original data, free the memory
 
 # convert to normalized form for network training
-processedData, processedLabels = processKerasDataNormalized(
-    data, timeScalars, sequence_length
+processedData, processedLabels = processKerasDataMethodA(
+    data, timeScalars, params["sequence_length"]
 )
 del data  # no longer need unscaled data
 
@@ -38,14 +43,9 @@ trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processed
 del processedData
 del processedLabels
 
-print(
-    "Time taken to load dataset = %d minutes"
-    % ((time.process_time() - start_time) / 60.0)
-)
-
 # Begin training the neural network based on the above parameters
-model, filename = runNormalizedNetwork2(
-    trainX, testX, trainY, testY, sequence_length, learning_rate, batch_size, epochs
+model, filename = MethodAC1(
+    trainX, testX, trainY, testY, params
 )
 
 
@@ -68,6 +68,6 @@ for i in range(15):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 50]
     # Use network to generate some notes
-    composition = startNormalizedNetworkRun(loaded_model, sample, sequence_length, 150)
+    composition = startMethodANetworkRun(loaded_model, sample, params["sequence_length"], 150)
     # Output to .midi file
     convertNormalizedDataToMidi(composition, timeScalars, filename)

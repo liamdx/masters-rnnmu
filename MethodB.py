@@ -1,5 +1,5 @@
 from DataGen import *
-from DataAnalysis import *
+from DataAnalysisHelpers import *
 from Network import *
 from NetworkRun import *
 import copy
@@ -33,7 +33,7 @@ midi_data, key_distributions = loadMidiData(
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
 
 # convert to normalized form for network training
-processedData, processedLabels, tokens = processKerasDataTokenized(
+processedData, processedLabels, tokens = processKerasDataMethodB(
     data,
     params["sequence_length"],
     params["composition_length"] * params["timestep_resolution"],
@@ -56,7 +56,7 @@ del finalData
 del finalLabels
 
 # Begin training the neural network based on the above parameters
-model, filename = TokenC1(trainX, testX, trainY, testY, tokens, params)
+model, filename = MethodBC1(trainX, testX, trainY, testY, tokens, params)
 
 
 # filename = "token-c3-test-2019-07-30-03-14-42"
@@ -79,7 +79,7 @@ for i in range(10):
     print(bounds)
     sample = tempData[bounds[0] : bounds[0] + 1]
     # Use network to generate some notes
-    composition = startTokenizedNetworkRun(
+    composition = startMethodBNetworkRun(
         loaded_model, sample, params["timestep_resolution"], 16
     )
     # Output to .midi file

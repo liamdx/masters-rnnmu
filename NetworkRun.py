@@ -12,7 +12,7 @@ def loadModel(modelName):
     return model
 
 
-def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
+def startMethodANetworkRun(model, sequence, sequence_length, notesToProduce):
     preds = []
     sample = copy.deepcopy(sequence)
     for i in tqdm(range(notesToProduce)):
@@ -28,7 +28,7 @@ def startNormalizedNetworkRun(model, sequence, sequence_length, notesToProduce):
     return preds
 
 
-def startTokenizedNetworkRun(model, sequence, timestep_resolution, secondsOfMusic):
+def startMethodBNetworkRun(model, sequence, timestep_resolution, secondsOfMusic):
     preds = []
     sample = copy.deepcopy(sequence)
     length__ = int(timestep_resolution * secondsOfMusic)

@@ -8,7 +8,7 @@ import copy
 import numpy as np
 import scipy.misc as smp
 from matplotlib import pyplot as plt
-from DataAnalysis import *
+from DataAnalysisHelpers import *
 from util.rnnmu_utils import similar
 from tqdm import tqdm
 import collections
@@ -147,7 +147,7 @@ def getKerasData(mididict, key_distributions):
     )
 
 
-def processKerasDataNormalized(data, timeScalars, sequenceSize):
+def processKerasDataMethodA(data, timeScalars, sequenceSize):
     newNotes = []
     newLabels = []
     print("Converting to LSTM Format")
@@ -188,17 +188,17 @@ def processKerasDataNormalized(data, timeScalars, sequenceSize):
                 priorNotes.append((pNoteTime, pNoteDuration, pNoteVelocity, pNotePitch))
             newNotes.append(priorNotes)
         counter += 1
-    return (np.array(newNotes), np.array(newLabels))
+    return (np.array(newNotes), np.array(newLabels))    
 
 
-def processKerasDataTokenized(
+def processKerasDataMethodB(
     data, sequence_size, num_timesteps, timestep_resolution, num_simultaneous_notes
 ):
     processedData = []
     pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
         data
     )
-    tokens, velocities = getTokens2(pitches_occurences, velocities_occurences, 500)
+    tokens, velocities = getTokensB(pitches_occurences, velocities_occurences, 500)
 
     print("\nConverting data to final network representation\n")
 
@@ -286,7 +286,7 @@ def getTokens(pitch_occurences, velocity_occurences):
     return tokens
 
 
-def getTokens2(pitch_occurences, velocity_occurences, max_tokens):
+def getTokensB(pitch_occurences, velocity_occurences, max_tokens):
     tokens = {}
     tokens[0] = (0, 0)
     maxVelocitiesPerPitch = 4

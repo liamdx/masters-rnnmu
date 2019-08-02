@@ -63,7 +63,7 @@ def evaluate(model, train_x, train_y, test_x, test_y):
     )
 
 
-def TokenC1(trainX, testX, trainY, testY, tokens, params):
+def MethodBC1(trainX, testX, trainY, testY, tokens, params):
 
     model = Sequential()
     model.add(
@@ -81,7 +81,7 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
     model.add(Dropout(0.3))
     model.add(Dense(params["sequence_length"], activation="elu"))
     model.add(CuDNNLSTM(len(tokens)))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.5))
     model.add(Dense(len(tokens), activation="elu"))
     model.add(Dense(params["num_simultaneous_notes"], activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
@@ -107,7 +107,7 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
     # properties are: dataset, learning rate, batch size, epochs, sequence length,
     # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
     
-    filename = "Token-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
+    filename = "MethodB-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
         params["dataset"],
         params["learning_rate"],
         params["batch_size"],
@@ -126,49 +126,63 @@ def TokenC1(trainX, testX, trainY, testY, tokens, params):
     return model, filename
 
 
-def runNormalizedNetwork(
-    trainX, testX, trainY, testY, sequence_length, _learning_rate, _batch_size, _epochs
-):
 
-    num_features = 4
+def MethodAC1(
+    trainX, testX, trainY, testY, params
+):
 
     model = Sequential()
     model.add(
         LSTM(
             units=256,
-            input_shape=(sequence_length, num_features),
+            input_shape=(params["sequence_length"], 4),
             return_sequences=True,
         )
     )
     model.add(Dropout(0.3))
-    model.add(Dense(512, activation="relu"))
-    model.add(Dense(256, activation="relu"))
+    model.add(Dense(512, activation="elu"))
+    model.add(Dense(256, activation="elu"))
     model.add(LSTM(128))
-    model.add(Dropout(0.15))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.3))
+    model.add(Dense(128, activation="elu"))
     model.add(Dense(4, activation="sigmoid"))
-
-    model_optimizer = adam(lr=_learning_rate)
+    model_optimizer = adam(lr=params["learning_rate"])
     model.compile(
-        loss="mean_squared_error",
-        optimizer=model_optimizer,
-        metrics=["accuracy", "mae"],
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae", "acc"]
     )
 
     model.summary()
+
+    a = datetime.datetime.now()
+    timestamp = "%s%s%s%s%s" % (a.second, a.minute, a.hour, a.day, a.month)
 
     print("Network.py: Beginning model training")
     model.fit(
         trainX,
         trainY,
         validation_data=(testX, testY),
-        epochs=_epochs,
-        batch_size=_batch_size,
+        epochs=params["epochs"],
+        batch_size=params["batch_size"],
     )
 
     directory = "debug/models/"
-    filename = "norm-test-{date:%Y-%m-%d-%H-%M-%S}".format(date=datetime.datetime.now())
+    # properties are: dataset, learning rate, batch size, epochs, sequence length,
+    # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
+    
+    filename = "MethodA-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
+        params["dataset"],
+        params["learning_rate"],
+        params["batch_size"],
+        params["epochs"],
+        params["sequence_length"],
+        2305,
+        params["num_simultaneous_notes"],
+        params["timestep_resolution"],
+        params["composition_length"],
+        params["data_amount"],
+        timestamp
+    )
 
     model.save(directory + filename + ".h5")
 
-    return model, trainX, trainY, testX, testY
+    return model, filename
