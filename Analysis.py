@@ -38,21 +38,20 @@ del dataset_data
 
 # features we are going to analyse
 labels = {
-    "Amount of Arpeggiation" : 1,
-    "Average Note Duration" : 2,
-    "Average Number of Simultaneous Pitches" : 3,
-    "Variability of Note Durations" : 4,
-    "Rhythmic Value Variability" : 5,
-    "Metrical Diversity" : 6,
-    "Variability in Rhythmic Value Run Lengths" : 7,
-    "Chromatic Motion" : 8,
-    "Contrary Motion" : 9,
-    "Stepwise Motion" : 10,
-    "Similar Motion" : 11,
-    "Parallel Motion" : 12,
-    "Variation of Dynamics" : 13,
-    "Melodic Embellishments" : 14,
-    "Repeated Notes" : 15,
+    "Amount of Arpeggiation" : 1, # fast melodic runs within confines of a key
+    "Average Note Duration" : 2, # Length of note
+    "Average Number of Simultaneous Pitches" : 3, # how many notes are active at once 
+    "Variability of Note Durations" : 4, # how much does the note length vary
+    "Rhythmic Value Variability" : 5, # similar but more broad (e.g. overall rhythmic feel of the piece)
+    "Metrical Diversity" : 6, # again similar
+    "Chromatic Motion" : 7, # motion of melody is chromatic (one after the other e.g. c1 -> c#1 -> d1 ->d#1)
+    "Contrary Motion" : 8, # motion of melody(s) run counter to one another (indicator of complexity)
+    "Stepwise Motion" : 9, # motion of melody moves in steps of they key (e.g. c3->e3->g3 perfect c major)
+    "Similar Motion" : 10, # motion of melody moves in same way, with different pitches (again indicator of complexityy)
+    "Parallel Motion" : 11,
+    "Variation of Dynamics" : 12,
+    "Melodic Embellishments" : 13,
+    "Repeated Notes" : 14,
 }
 
 final_data = [0] * int(len(labels) + 1)

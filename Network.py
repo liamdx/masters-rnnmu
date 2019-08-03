@@ -75,13 +75,13 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
     )
     model.add(Dropout(0.4))
     model.add(CuDNNLSTM(512, return_sequences=True))
-    model.add(Dropout(0.4))
+    model.add(Dropout(0.3))
     model.add(Dense(512, activation="elu"))
     model.add(CuDNNLSTM(params["sequence_length"], return_sequences=True))
     model.add(Dropout(0.3))
     model.add(Dense(params["sequence_length"], activation="elu"))
     model.add(CuDNNLSTM(len(tokens)))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.3))
     model.add(Dense(len(tokens), activation="elu"))
     model.add(Dense(params["num_simultaneous_notes"], activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
@@ -125,6 +125,70 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
 
     return model, filename
 
+
+
+def MethodBC2(trainX, testX, trainY, testY, tokens, params):
+
+    model = Sequential()
+    model.add(Embedding(len(tokens), 4, input_shape=(params["sequence_length"], params["num_simultaneous_notes"]),))
+    model.add(
+        CuDNNLSTM(
+            units=512,
+            # input_shape=(params["sequence_length"], params["num_simultaneous_notes"]),
+            return_sequences=True,
+        )
+    )
+    model.add(Dropout(0.4))
+    model.add(CuDNNLSTM(512, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(Dense(512, activation="elu"))
+    model.add(CuDNNLSTM(params["sequence_length"], return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(Dense(params["sequence_length"], activation="elu"))
+    model.add(CuDNNLSTM(len(tokens)))
+    model.add(Dropout(0.3))
+    model.add(Dense(len(tokens), activation="elu"))
+    model.add(Dense(params["num_simultaneous_notes"], activation="elu"))
+    model_optimizer = adam(lr=params["learning_rate"])
+    model.compile(
+        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae", "acc"]
+    )
+
+    model.summary()
+
+    a = datetime.datetime.now()
+    timestamp = "%s%s%s%s%s" % (a.second, a.minute, a.hour, a.day, a.month)
+
+    print("Network.py: Beginning model training")
+    model.fit(
+        trainX,
+        trainY,
+        validation_data=(testX, testY),
+        epochs=params["epochs"],
+        batch_size=params["batch_size"],
+    )
+
+    directory = "debug/models/"
+    # properties are: dataset, learning rate, batch size, epochs, sequence length,
+    # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
+    
+    filename = "MethodB-%s-C2-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
+        params["dataset"],
+        params["learning_rate"],
+        params["batch_size"],
+        params["epochs"],
+        params["sequence_length"],
+        len(tokens),
+        params["num_simultaneous_notes"],
+        params["timestep_resolution"],
+        params["composition_length"],
+        params["data_amount"],
+        timestamp
+    )
+
+    model.save(directory + filename + ".h5")
+
+    return model, filename
 
 
 def MethodAC1(

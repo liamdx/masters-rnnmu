@@ -12,13 +12,13 @@ from keras.utils import plot_model
 params = {}
 params["learning_rate"] = 0.00003
 params["batch_size"] = 128
-params["epochs"] = 8
+params["epochs"] = 15
 params["timestep_resolution"] = 15
 params["composition_length"] = 32
 params["dataset"] = "classical"
-params["sequence_length"] = 150
+params["sequence_length"] = 75
 params["num_simultaneous_notes"] = 4
-params["data_amount"] = 0.2
+params["data_amount"] = 0.1
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
@@ -31,7 +31,7 @@ midi_data, key_distributions = loadMidiData(
 
 # convert into python arrays andd dicts
 data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
-
+ 
 # convert to normalized form for network training
 processedData, processedLabels, tokens = processKerasDataMethodB(
     data,
@@ -56,7 +56,7 @@ del finalData
 del finalLabels
 
 # Begin training the neural network based on the above parameters
-model, filename = MethodBC1(trainX, testX, trainY, testY, tokens, params)
+model, filename = MethodBC2(trainX, testX, trainY, testY, tokens, params)
 
 
 # filename = "token-c3-test-2019-07-30-03-14-42"
