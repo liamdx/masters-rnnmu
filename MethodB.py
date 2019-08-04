@@ -9,12 +9,13 @@ from keras.preprocessing import sequence
 from keras.utils import plot_model
 import numpy as np
 
+
 def runFullMethodBC1():
     # parameter dictionary
     params = {}
     params["learning_rate"] = 0.000003
     params["batch_size"] = 128
-    params["epochs"] = 50
+    params["epochs"] = 100
     params["timestep_resolution"] = 10
     params["composition_length"] = 60
     params["dataset"] = "classical"
@@ -33,7 +34,7 @@ def runFullMethodBC1():
     
     # convert into python arrays andd dicts
     data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
-    
+    del midi_data
     # convert to normalized form for network training
     processedData, processedLabels, tokens = processKerasDataMethodB(
         data,
@@ -44,8 +45,7 @@ def runFullMethodBC1():
     )
     # no longer need unscaled data
     del data
-    del midi_data
-    
+
     finalData, finalLabels = finaliseTokenNetworkData(processedData, processedLabels)
     del processedData
     del processedLabels
@@ -53,12 +53,13 @@ def runFullMethodBC1():
     # train / test split
     # trainX, testX, trainY, testY = genNetworkData(processedData, processedLabels)
     trainX, testX, trainY, testY = genTokenizedNetworkData(finalData, finalLabels, 0.25)
-    # del finalData
-    # del finalLabels
+    del finalData
+    del finalLabels
     
     # Begin training the neural network based on the above parameters
     model, filename = MethodBC1(trainX, testX, trainY, testY, tokens, params)
     
+    del model
     # filename = "token-c3-test-2019-07-30-03-14-42"
     # Load a pretrained model and generate some music
     loaded_model = loadModel(filename + ".h5")
@@ -81,4 +82,7 @@ def runFullMethodBC1():
             loaded_model, sample, params["timestep_resolution"], 60
         )
         # Output to .midi file
-        convertTokenizedDataToMidi2(composition, tokens, filename, params["timestep_resolution"])
+        convertMethodBDataToMidi(composition, tokens, filename, params["timestep_resolution"])
+    
+    del loaded_model
+    del tempData

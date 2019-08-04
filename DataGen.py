@@ -170,6 +170,8 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
 
 
     for i in tqdm(range(len(data))):
+    #     # only take first 1000 notes of song (for now)
+    #     # for j in range(len(data[i])):
     #     # for j in each note in each song
         for j in range(len(data[i])):
             if j < sequenceSize:
@@ -191,6 +193,7 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
             token_pitch = getNoteTokenA(note_pitch, pitch_tokens)
             # token_pitch = bisect.bisect_left(list(pitch_tokens.keys()), note_pitch)
 
+
             newLabels.append((token_pitch, token_offset, token_duration, token_velocity))
 
             priorNotes = []
@@ -209,7 +212,7 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
             
             newNotes.append(priorNotes)
 
-    return (np.array(newNotes), np.array(newLabels))
+    return (np.array(newNotes), np.array(newLabels), tokens, token_cutoffs)
 
 
 
@@ -330,7 +333,6 @@ def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max
     for pitch, occurences in pitches_occurences.items():
         if pitch not in tokens.keys():
             tokens[pitch] = counter
-            print(counter)
             counter += 1
     
     last_pitch = counter - 1
@@ -347,7 +349,6 @@ def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max
     last_velocity = counter - 1
     
     remaining_tokens = int(max_tokens - (counter + 1)) 
-    print("remaining tokens = %d" % remaining_tokens)
     current_counter = counter
     # durations
     durations = list(durations_occurences.keys())
@@ -477,25 +478,36 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
     return NewValue
 
 
-def convertMethodADataToMidi(notes, tokens, model_name):
+def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
     lastNoteStart = 0
-    for n in tqdm(notes):
+    for note in tqdm(notes):
         # remap output of neural network / normalise notes
-        pitch = np.uint8(tokens[note[0][0]])
-        offset = tokens[note[0][1]]
-        duration = tokens[note[0][2]]
-        velocity = np.uint8(tokens[note[0][3]])
+        pitch_token = int(note[0][0])
+        offset_token = int(note[0][1])
+        duration_token = int(note[0][2])
+        velocity_token  = int(note[0][3])
+        
+        pitch_token = int(clamp(pitch_token, 1, token_cutoffs["last_pitch"]))
+        velocity_token = int(clamp(offset_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))
+        velocity_token = int(clamp(offset_token, token_cutoffs["last_velocity"] + 1, token_cutoffs["last_duration"]))
+        velocity_token = int(clamp(offset_token, token_cutoffs["last_duration"] + 1, token_cutoffs["last_offset"]))
+        
+        pitch = np.uint8(tokens[pitch_token])
+        offset = tokens[offset_token]
+        duration = tokens[duration_token]
+        velocity = np.uint8(tokens[velocity_token])
 
         start = lastNoteStart + offset
-        note = pretty_midi.Note(velocity, pitch, start, start + duration)
-        inst.notes.append(note)
+        pmnote = pretty_midi.Note(velocity, pitch, start, start + duration)
+        inst.notes.append(pmnote)
         lastNoteStart = start
 
     mid.instruments.append(inst)
+    cleanMidiA(mid)
     mid.write(getMidiRunName(model_name))
 
 def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
@@ -507,7 +519,7 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
     timestepCounter = 0
     # what notes are currently being played
     current_notes = {}
-    # unnormalize the data at each step
+     # unnormalize the data at each step
     for d in tqdm(data):
         for timestep in d:
             # for all notes in this timestep
@@ -565,17 +577,37 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
     del current_notes
     print("total number of notes = %d" % len(inst.notes))
     mid.instruments.append(inst)
+    cleanMidiB(mid)
     mid.write(getMidiRunName(model_name))
 
+
+def clamp(n, minn, maxn):
+    return max(min(maxn, n), minn)
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i : i + n]
 
+def cleanMidiB(midi):
+    print("Cleaning Midi..")
+    pitch_randomiser = random.randint(-11, 11)
+    for instrument in midi.instruments:
+        for note in instrument.notes:
+            note.pitch += pitch_randomiser
+            note.start = note.start * 2
+            note.end = note.end * 2
+
+def cleanMidiA(midi):
+    print("Cleaning Midi..")
+    pitch_randomiser = random.randint(-11, 11)
+    for instrument in midi.instruments:
+        for note in instrument.notes:
+            note.pitch += pitch_randomiser
+        
 
 def getMidiRunName(model_name):
-    directory = "debug/midi/" + model_name
+    directory = "res/midi/" + model_name
 
     if not os.path.exists(directory):
         os.makedirs(directory)

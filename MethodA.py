@@ -39,18 +39,16 @@ from tqdm import tqdm
 #del nwexamples
 #del examples
 
+
 def runFullMethodA():
     # parameter dictionary
     params = {}
     params["learning_rate"] = 0.0005
-    params["batch_size"] = 64
-    params["epochs"] = 100
-    params["timestep_resolution"] = 15
-    params["composition_length"] = 32
+    params["batch_size"] = 128
+    params["epochs"] = 150
     params["dataset"] = "classical"
     params["sequence_length"] = 5
-    params["num_simultaneous_notes"] = 4
-    params["data_amount"] = 0.3
+    params["data_amount"] = 1.0
     
     # get the filepaths and load for all .midi files in the dataset
     filepaths = getCleanedFilePaths(params["dataset"])
@@ -66,7 +64,7 @@ def runFullMethodA():
     
     
     # convert to normalized form for network training
-    processedData, processedLabels = processKerasDataMethodA(
+    processedData, processedLabels, tokens, token_cutoffs = processKerasDataMethodA(
         data, timeScalars, params["sequence_length"]
     )
     del data  # no longer need unscaled data
@@ -79,7 +77,7 @@ def runFullMethodA():
     
     # Begin training the neural network based on the above parameters
     model, filename = MethodAC1(trainX, testX, trainY, testY, params)
-    
+    del model
     
     # Load a pretrained model and generate some music
     # filename = "norm-test-2019-07-28-13-27-26"
@@ -88,9 +86,10 @@ def runFullMethodA():
     
     # take some test data
     tempData = copy.deepcopy(testX)
-    # Even when we pass in one sequence, the RNN expects the shape to be 3D
-    # e.g. shape of input must be at least (1, sequence_length, num_features)
     
+    # inverse tokens for conversion back to midi
+    inv_tokens = invertDictionary(tokens)
+    # produce 20 compositions
     for i in range(20):
         upperbound = len(tempData)
         bounds = []
@@ -104,7 +103,10 @@ def runFullMethodA():
             loaded_model, sample, params["sequence_length"], 150
         )
         # Output to .midi file
-        convertNormalizedDataToMidi(composition, timeScalars, filename)
-        
+        convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
     
-runFullMethodA()
+    del loaded_model
+    del tempData
+    del inv_tokens
+    del tokens
+#

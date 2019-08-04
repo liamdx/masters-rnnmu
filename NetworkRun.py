@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 def loadModel(modelName):
-    directory = "debug/models/"
+    directory = "res/models/"
     model = load_model(directory + modelName, compile=True)
     return model
 
