@@ -14,6 +14,8 @@ from tqdm import tqdm
 import collections
 import operator
 import mido
+from collections import OrderedDict
+import bisect
 
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
@@ -42,7 +44,8 @@ def getCleanedFilePaths(dataset):
 
     return cleanfiles
 
-# pretty midi object 
+
+# pretty midi object
 def limitMidiOctaves(pm, min, max):
     for note in pm.instruments[0].notes:
         while note.pitch < min or note.pitch > max:
@@ -152,43 +155,67 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
     newLabels = []
     print("Converting to LSTM Format")
     counter = 0
+
+    pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
+        data
+    )
+
+
+    tokens, token_cutoffs = getTokensA(pitches_occurences, durations_occurences, offsets_occurences, 500)
+    inv_tokens = invertDictionary(tokens)
+    pitch_tokens = invertDictionary(slice_odict(inv_tokens,1, token_cutoffs["last_pitch"] + 1))
+    velocity_tokens = invertDictionary(slice_odict(inv_tokens,token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"] +1))
+    duration_tokens = invertDictionary(slice_odict(inv_tokens,token_cutoffs["last_velocity"] + 1, token_cutoffs["last_duration"] + 1))
+    offset_tokens = invertDictionary(slice_odict(inv_tokens,token_cutoffs["last_duration"]+1, token_cutoffs["last_offset"] + 1))
+
+
     for i in tqdm(range(len(data))):
-        # only take first 1000 notes of song (for now)
-        # for j in range(len(data[i])):
-        # for j in each note in each song
+    #     # for j in each note in each song
         for j in range(len(data[i])):
             if j < sequenceSize:
-                j = sequenceSize
+               j = sequenceSize
             note = data[i][j]
-            # remap note time from min note time in set, max note time in set to 0, 1
-            newNoteTime = float(remap(note[0], timeScalars[0], timeScalars[1], 0, 1))
-            # remap note time from min note duration in set, max note duration in set to 0, 1
-            newNoteDuration = float(
-                remap(note[1], timeScalars[2], timeScalars[3], 0, 1)
-            )
-            # 0, 127 -> 0, 1
-            newNoteVelocity = float(remap(note[2], 0, 127, 0, 1))
-            # 0, 127 -> 0, 1
-            newNotePitch = float(remap(note[3], timeScalars[4], timeScalars[5], 0, 1))
-            newLabels.append(
-                (newNoteTime, newNoteDuration, newNoteVelocity, newNotePitch)
-            )
+
+            note_time = note[0]
+            note_duration = note[1]
+            note_velocity = note[2]
+            note_pitch = note[3]
+
+            # data[min(data.keys(), key=lambda k: abs(k-num))]) 
+            token_offset = getNoteTokenA(note_time, offset_tokens)
+            # token_offset = bisect.bisect_left(list(offset_tokens.keys()), note_time)
+            token_duration = getNoteTokenA(note_duration, duration_tokens)
+            #token_duration = bisect.bisect_left(list(duration_tokens.keys()), note_duration)
+            token_velocity = getNoteTokenA(note_velocity, velocity_tokens)
+            # token_velocity = bisect.bisect_left(list(velocity_tokens.keys()), note_velocity)
+            token_pitch = getNoteTokenA(note_pitch, pitch_tokens)
+            # token_pitch = bisect.bisect_left(list(pitch_tokens.keys()), note_pitch)
+
+            newLabels.append((token_pitch, token_offset, token_duration, token_velocity))
+
             priorNotes = []
             for k in range(sequenceSize):
-                # get previous notes of length sequenceSize
-                prevNote = data[i][j - (k + 1)]
-                pNoteTime = float(
-                    remap(prevNote[0], timeScalars[0], timeScalars[1], 0, 1)
-                )
-                pNoteDuration = float(
-                    remap(prevNote[1], timeScalars[2], timeScalars[3], 0, 1)
-                )
-                pNoteVelocity = float(remap(prevNote[2], 0, 127, 0, 1))
-                pNotePitch = float(remap(prevNote[3], 0, 127, 0, 1))
-                priorNotes.append((pNoteTime, pNoteDuration, pNoteVelocity, pNotePitch))
+                pnote = data[i][j - (k + 1)]
+                pnote_time = pnote[0]
+                pnote_duration = pnote[1]
+                pnote_velocity = pnote[2]
+                pnote_pitch = pnote[3]
+
+                ptoken_offset = getNoteTokenA(pnote_time, offset_tokens)
+                ptoken_duration = getNoteTokenA(pnote_duration, duration_tokens)
+                ptoken_velocity = getNoteTokenA(pnote_velocity, velocity_tokens)
+                ptoken_pitch = token_pitch = getNoteTokenA(pnote_pitch, pitch_tokens)
+                priorNotes.append((ptoken_pitch, ptoken_offset, ptoken_duration, ptoken_velocity))
+            
             newNotes.append(priorNotes)
-        counter += 1
-    return (np.array(newNotes), np.array(newLabels))    
+
+    return (np.array(newNotes), np.array(newLabels))
+
+
+
+def invertDictionary(old_dict):
+    inverted_dict = OrderedDict([[v,k] for k,v in old_dict.items()])
+    return(inverted_dict)
 
 
 def processKerasDataMethodB(
@@ -215,7 +242,7 @@ def processKerasDataMethodB(
             pitch = note[3]
             lastStartTime += time
 
-            note_token = getNoteToken(pitch, velocity, tokens, velocities)
+            note_token = getNoteTokenB(pitch, velocity, tokens, velocities)
             note_duration = int(timestep_resolution * duration)
             note_start = int((lastStartTime) * timestep_resolution)
 
@@ -249,7 +276,7 @@ def processKerasDataMethodB(
     return x, y, tokens
 
 
-def getNoteToken(notePitch, noteVelocity, tokens, velocities):
+def getNoteTokenB(notePitch, noteVelocity, tokens, velocities):
     inv_tokens = dict((v, k) for k, v in tokens.items())
     if (notePitch, noteVelocity) in tokens.values():
         return inv_tokens[(notePitch, noteVelocity)]
@@ -257,6 +284,20 @@ def getNoteToken(notePitch, noteVelocity, tokens, velocities):
         # find the veocity with the minimum distance from current velocityy
         nearestVelocity = min(velocities, key=lambda x: abs(x - noteVelocity))
         return inv_tokens[(notePitch, nearestVelocity)]
+
+
+def getNoteTokenA(value, dictionary):
+    if value in list(dictionary.keys()):
+        return(dictionary[value])
+    else:
+        lowestDifference = 3000
+        for k, v in dictionary.items():
+            diff = abs(k - value)
+            if diff < lowestDifference:
+                lowestDifference = k
+        return(dictionary[lowestDifference])
+        
+
 
 
 def finaliseTokenNetworkData(x, y):
@@ -275,15 +316,79 @@ def distance(a, b):
         return 0
 
 
-def getTokens(pitch_occurences, velocity_occurences):
-    tokens = {}
+def slice_odict(odict, start=None, end=None):
+    return OrderedDict([
+        (k,v) for (k,v) in odict.items() 
+        if k in (list(odict.keys())[start:end])
+    ])
+
+def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max_tokens):
+    tokens = OrderedDict()
+    tokens[0] = 0
     counter = 1
-    for pitch in pitch_occurences:
-        for velocity in velocity_occurences:
-            currentCombination = (pitch, velocity)
-            tokens[currentCombination] = counter
+    
+    for pitch, occurences in pitches_occurences.items():
+        if pitch not in tokens.keys():
+            tokens[pitch] = counter
+            print(counter)
             counter += 1
-    return tokens
+    
+    last_pitch = counter - 1
+
+    tokens[32] = counter
+    counter += 1
+    tokens[45] = counter
+    counter += 1 
+    tokens[90] = counter
+    counter += 1
+    tokens[120] = counter
+    counter += 1
+    
+    last_velocity = counter - 1
+    
+    remaining_tokens = int(max_tokens - (counter + 1)) 
+    print("remaining tokens = %d" % remaining_tokens)
+    current_counter = counter
+    # durations
+    durations = list(durations_occurences.keys())
+    i = 0
+
+    canEmplace = True
+    while canEmplace:
+        currentDuration = abs(durations[i])
+        i += 1
+        if currentDuration not in tokens:
+            tokens[currentDuration] = counter
+            counter += 1
+        if len(tokens) >= current_counter + (remaining_tokens / 2):
+            canEmplace = False
+        
+    last_duration = counter - 1
+    current_counter = counter
+    canEmplace = True
+    # offsets
+    i = 0
+    offsets = list(offsets_occurences.keys())
+    while canEmplace:
+        currentDuration = abs(durations[i])
+        i += 1
+        if currentDuration not in tokens:
+            tokens[currentDuration] = counter
+            counter += 1
+        if len(tokens) >= current_counter + (remaining_tokens / 2):
+            canEmplace = False
+
+        
+
+    last_offset = counter - 1 
+
+    token_cutoffs = {}
+    token_cutoffs["last_pitch"] = last_pitch
+    token_cutoffs["last_velocity"] = last_velocity
+    token_cutoffs["last_duration"] = last_duration
+    token_cutoffs["last_offset"] = last_offset
+
+    return tokens, token_cutoffs
 
 
 def getTokensB(pitch_occurences, velocity_occurences, max_tokens):
@@ -372,7 +477,7 @@ def remap(OldValue, OldMin, OldMax, NewMin, NewMax):
     return NewValue
 
 
-def convertNormalizedDataToMidi(notes, timeScalars, model_name):
+def convertMethodADataToMidi(notes, tokens, model_name):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
@@ -380,10 +485,11 @@ def convertNormalizedDataToMidi(notes, timeScalars, model_name):
     lastNoteStart = 0
     for n in tqdm(notes):
         # remap output of neural network / normalise notes
-        pitch = np.uint8(remap(n[0][3], 0, 1, timeScalars[4], timeScalars[5]))
-        velocity = np.uint8(remap(n[0][2], 0, 1, 0, 127))
-        offset = remap(n[0][0], 0, 1, timeScalars[0], timeScalars[1])
-        duration = remap(n[0][1], 0, 1, timeScalars[2], timeScalars[3])
+        pitch = np.uint8(tokens[note[0][0]])
+        offset = tokens[note[0][1]]
+        duration = tokens[note[0][2]]
+        velocity = np.uint8(tokens[note[0][3]])
+
         start = lastNoteStart + offset
         note = pretty_midi.Note(velocity, pitch, start, start + duration)
         inst.notes.append(note)
@@ -392,43 +498,7 @@ def convertNormalizedDataToMidi(notes, timeScalars, model_name):
     mid.instruments.append(inst)
     mid.write(getMidiRunName(model_name))
 
-
-def convertTokenizedDataToMidi(data, tokens, model_name, timestep_resolution):
-    print("Converting raw notes to MIDI")
-    mid = pretty_midi.PrettyMIDI()
-    inst = pretty_midi.Instrument(0)
-    lastNoteStart, timestepCounter = (0, 0)
-    # what notes are currently being played
-    current_notes = {}
-    timestep_resolution * data
-    for timestep in data:
-        for event in timestep:
-            # if we encounter a new note
-            print("Event Type = ")
-            print(type(event))
-            if event not in current_notes:
-                current_notes[event] = (timestepCounter, 1)
-            else:
-                current_notes[event][1] += 1
-            # if any of the currently playing notes are not
-            # being played at this timestep, remove it from current notes
-            for note, timing in current_notes.items():
-                if note not in timestep:
-                    pitch, velocity = tokens[note]
-                    start = timing[0] / timestep_resolution
-                    duration = timing / timestep_resolution
-                    new_note = pretty_midi.Note(
-                        velocity, pitch, start, start + duration
-                    )
-                    inst.notes.append(new_note)
-                    current_notes.pop(note)
-        timestepCounter += 1
-
-    mid.instruments.append(inst)
-    mid.write(getMidiRunName(model_name))
-
-
-def convertTokenizedDataToMidi2(data, tokens, model_name, timestep_resolution):
+def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)

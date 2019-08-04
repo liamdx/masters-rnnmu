@@ -73,6 +73,7 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
             return_sequences=True,
         )
     )
+    model.add(Dense(512, activation = "elu"))
     model.add(Dropout(0.4))
     model.add(CuDNNLSTM(512, return_sequences=True))
     model.add(Dropout(0.3))
@@ -106,7 +107,7 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
     directory = "debug/models/"
     # properties are: dataset, learning rate, batch size, epochs, sequence length,
     # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
-    
+
     filename = "MethodB-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
         params["dataset"],
         params["learning_rate"],
@@ -118,7 +119,7 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
         params["timestep_resolution"],
         params["composition_length"],
         params["data_amount"],
-        timestamp
+        timestamp,
     )
 
     model.save(directory + filename + ".h5")
@@ -126,32 +127,39 @@ def MethodBC1(trainX, testX, trainY, testY, tokens, params):
     return model, filename
 
 
-
 def MethodBC2(trainX, testX, trainY, testY, tokens, params):
-
+    numTokens = len(tokens)
     model = Sequential()
-    model.add(Embedding(len(tokens), 4, input_shape=(params["sequence_length"], params["num_simultaneous_notes"]),))
+
+    testX = testX.reshape(
+        len(testX), params["sequence_length"] * params["num_simultaneous_notes"]
+    )
+    trainX = trainX.reshape(
+        len(trainX), params["sequence_length"] * params["num_simultaneous_notes"]
+    )
+
+    # num simultaneous notes = 4, sequence length = 75
     model.add(
-        CuDNNLSTM(
-            units=512,
-            # input_shape=(params["sequence_length"], params["num_simultaneous_notes"]),
-            return_sequences=True,
+        Embedding(
+            numTokens,
+            params["num_simultaneous_notes"],
+            input_length=params["sequence_length"] * params["num_simultaneous_notes"],
         )
     )
-    model.add(Dropout(0.4))
-    model.add(CuDNNLSTM(512, return_sequences=True))
+    model.add(CuDNNLSTM(256, return_sequences=True))
+    model.add(Dense(256, activation="elu"))
+    model.add(CuDNNLSTM(params["sequence_length"] * 4, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(Dense(512, activation="elu"))
-    model.add(CuDNNLSTM(params["sequence_length"], return_sequences=True))
+    model.add(Dense(params["sequence_length"] * 4, activation="elu"))
+    model.add(CuDNNLSTM(numTokens))
     model.add(Dropout(0.3))
-    model.add(Dense(params["sequence_length"], activation="elu"))
-    model.add(CuDNNLSTM(len(tokens)))
-    model.add(Dropout(0.3))
-    model.add(Dense(len(tokens), activation="elu"))
+    model.add(Dense(numTokens, activation="elu"))
     model.add(Dense(params["num_simultaneous_notes"], activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
     model.compile(
-        loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae", "acc"]
+        loss="mean_squared_error",
+        optimizer=model_optimizer,
+        metrics=["mae", "acc"],
     )
 
     model.summary()
@@ -171,19 +179,19 @@ def MethodBC2(trainX, testX, trainY, testY, tokens, params):
     directory = "debug/models/"
     # properties are: dataset, learning rate, batch size, epochs, sequence length,
     # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
-    
+
     filename = "MethodB-%s-C2-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
         params["dataset"],
         params["learning_rate"],
         params["batch_size"],
         params["epochs"],
         params["sequence_length"],
-        len(tokens),
+        numTokens,
         params["num_simultaneous_notes"],
         params["timestep_resolution"],
         params["composition_length"],
         params["data_amount"],
-        timestamp
+        timestamp,
     )
 
     model.save(directory + filename + ".h5")
@@ -191,25 +199,24 @@ def MethodBC2(trainX, testX, trainY, testY, tokens, params):
     return model, filename
 
 
-def MethodAC1(
-    trainX, testX, trainY, testY, params
-):
+def MethodAC1(trainX, testX, trainY, testY, params):
 
     model = Sequential()
     model.add(
-        LSTM(
-            units=256,
-            input_shape=(params["sequence_length"], 4),
-            return_sequences=True,
+        CuDNNLSTM(
+            units=512, input_shape=(params["sequence_length"], 4), return_sequences=True
         )
     )
     model.add(Dropout(0.3))
     model.add(Dense(512, activation="elu"))
-    model.add(Dense(256, activation="elu"))
-    model.add(LSTM(128))
+    model.add(CuDNNLSTM(256, return_sequences= True))
     model.add(Dropout(0.3))
-    model.add(Dense(128, activation="elu"))
-    model.add(Dense(4, activation="sigmoid"))
+    model.add(Dense(256, activation="elu"))
+    model.add(CuDNNLSTM(params["sequence_length"], return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(Dense(params["sequence_length"], activation="elu"))
+    model.add(CuDNNLSTM(4))
+    model.add(Dense(4, activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
     model.compile(
         loss="mean_squared_error", optimizer=model_optimizer, metrics=["mae", "acc"]
@@ -232,7 +239,7 @@ def MethodAC1(
     directory = "debug/models/"
     # properties are: dataset, learning rate, batch size, epochs, sequence length,
     # num tokens, num simultaneous notes, timestep resolution, composition length, percentage of data used
-    
+
     filename = "MethodA-%s-C1-%f-%d-%d-%d-%d-%d-%d-%d-%d-%s" % (
         params["dataset"],
         params["learning_rate"],
@@ -244,7 +251,7 @@ def MethodAC1(
         params["timestep_resolution"],
         params["composition_length"],
         params["data_amount"],
-        timestamp
+        timestamp,
     )
 
     model.save(directory + filename + ".h5")

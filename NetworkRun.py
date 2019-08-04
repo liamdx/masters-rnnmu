@@ -43,3 +43,24 @@ def startMethodBNetworkRun(model, sequence, timestep_resolution, secondsOfMusic)
     #        print("last row  after roll = ")
     #        print(sample[0][len(sample) - 1])
     return preds
+
+
+def startMethodBEmbeddingNetworkRun(
+    model, sequence, timestep_resolution, secondsOfMusic
+):
+    preds = []
+    sample = copy.deepcopy(sequence)
+    length__ = int(timestep_resolution * secondsOfMusic)
+    print("Composing: Genius at work")
+    for i in range(length__):
+        pred = model.predict(sample)
+        preds.append(pred)
+        print("sample before roll = ")
+        print(sample[0])
+        sample = np.roll(sample, -4)
+        for j in range(4):
+            index = len(sample) - (4 - j)
+            sample[0][index] = pred[0][j]
+        print("Sample after roll = ")
+        print(sample[0])
+    return preds
