@@ -13,13 +13,13 @@ import numpy as np
 def runFullMethodBC1():
     # parameter dictionary
     params = {}
-    params["learning_rate"] = 0.000003
+    params["learning_rate"] = 0.000004
     params["batch_size"] = 128
-    params["epochs"] = 100
+    params["epochs"] = 150
     params["timestep_resolution"] = 10
     params["composition_length"] = 60
     params["dataset"] = "classical"
-    params["sequence_length"] = 50
+    params["sequence_length"] = 100
     params["num_simultaneous_notes"] = 4
     params["data_amount"] = 1.0
     
@@ -69,7 +69,7 @@ def runFullMethodBC1():
     tempData = copy.deepcopy(testX)
     # plot_model(loaded_model, to_file="debug_model.png")
     # how many compositions should we produce?
-    for i in range(10):
+    for i in range(30):
         upperbound = len(tempData)
         bounds = []
         for j in range(2):
@@ -86,3 +86,6 @@ def runFullMethodBC1():
     
     del loaded_model
     del tempData
+
+
+runFullMethodBC1()

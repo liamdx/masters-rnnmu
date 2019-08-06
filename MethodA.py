@@ -39,15 +39,14 @@ from tqdm import tqdm
 #del nwexamples
 #del examples
 
-
 def runFullMethodA():
     # parameter dictionary
     params = {}
-    params["learning_rate"] = 0.0005
-    params["batch_size"] = 128
+    params["learning_rate"] = 0.00003
+    params["batch_size"] = 64
     params["epochs"] = 150
     params["dataset"] = "classical"
-    params["sequence_length"] = 5
+    params["sequence_length"] = 30
     params["data_amount"] = 1.0
     
     # get the filepaths and load for all .midi files in the dataset
@@ -90,7 +89,7 @@ def runFullMethodA():
     # inverse tokens for conversion back to midi
     inv_tokens = invertDictionary(tokens)
     # produce 20 compositions
-    for i in range(20):
+    for i in range(30):
         upperbound = len(tempData)
         bounds = []
         for j in range(2):
@@ -109,4 +108,3 @@ def runFullMethodA():
     del tempData
     del inv_tokens
     del tokens
-#

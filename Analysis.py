@@ -3,42 +3,54 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
-
+# used for plot formatting
 rcParams.update({"figure.autolayout": True})
 
-training_analysis_filepath = "dataset_analysis.xml"
-generated_analysis_filepath = "generated_analysis.xml"
+def getFeatures(data):
+    # make the data workable and not xml
+    feature_list = []
+    for song in dataset_data:
+        features = song["feature"]
+        for od in features:
+            fname = od["name"]
+            if fname not in feature_list:
+                feature_list.append(fname)
+    return(feature_list)
+    
 
-dataset_raw = parseAnalysisData(training_analysis_filepath)
-dataset_data = deepcopy(dataset_raw["feature_vector_file"]["data_set"])
-generated_raw = parseAnalysisData(generated_analysis_filepath)
-generated_data = deepcopy(generated_raw["feature_vector_file"]["data_set"])
-del dataset_raw
+def formatData(data):
+    # make the data workable and not xml
+    new_data = {}
+    for song in data:
+        name = song["data_set_id"].rsplit("\\", 1)[1]
+        name = name.rsplit(".", 1)[0]
+        new_data[name] = {}
+        features = song["feature"]
 
-processed_data = {}
-feature_list = []
-# make the data workable and not xml
-for song in dataset_data:
-    name = song["data_set_id"].rsplit("\\", 1)[1]
-    name = name.rsplit(".", 1)[0]
-    processed_data[name] = {}
-    features = song["feature"]
+        for od in features:
+            fname = od["name"]
+            v = od["v"]
+            if type(v) == str:
+                val = float(v)
+                new_data[name][fname] = val
+            elif type(v) == list:
+                l = []
+                for val in v:
+                    l.append(float(val))
+                new_data[name][fname] = l
+    return(new_data)
 
-    for od in features:
-        lastKey = ""
-        fname = od["name"]
-        v = od["v"]
-        if type(v) == str:
-            val = float(v)
-            processed_data[name][fname] = val
-        elif type(v) == list:
-            l = []
-            for val in v:
-                l.append(float(val))
-            processed_data[name][fname] = l
-        if fname not in feature_list:
-            feature_list.append(fname)
-del dataset_data
+
+def aggregateData(formatted_data, labels):
+    aggregated_data = [0] * int(len(labels) + 1)
+    counter = 0  # for meaning
+    for k, v in formatted_data.items():
+        counter += 1
+        for l, index in labels.items():
+           aggregated_data[index - 1] += v[l]
+
+    aggregated_data = [x / len(formatted_data) for x in aggregated_data]
+    return(aggregated_data)
 
 
 # features we are going to analyse
@@ -59,20 +71,29 @@ labels = {
     "Repeated Notes": 14,  # number of notes that are repeated one after the other (indicator of low complexity)
 }
 
-final_data = [0] * int(len(labels) + 1)
 
-counter = 0  # for meaning
-for k, v in processed_data.items():
-    counter += 1
-    for l, index in labels.items():
-        final_data[index - 1] += v[l]
+training_analysis_filepath = "res/analysis_data/dataset_analysis.xml"
+generated_analysis_filepath = "res/analysis_data/dataset_analysis.xml"
 
-final_data = [x / len(processed_data) for x in final_data]
+dataset_raw = parseAnalysisData(training_analysis_filepath)
+dataset_data = deepcopy(dataset_raw["feature_vector_file"]["data_set"])
+generated_raw = parseAnalysisData(generated_analysis_filepath)
+generated_data = deepcopy(generated_raw["feature_vector_file"]["data_set"])
+del dataset_raw
+del generated_raw
 
-y_pos = np.arange(len(final_data))
+features = getFeatures(dataset_data)
+dataset_final_data = formatData(dataset_data)
+generated_final_data = formatData(generated_data)
+
+
+mean_dataset_data = aggregateData(dataset_final_data, labels)
+mean_generated_data = aggregateData(generated_final_data, labels)
+
+y_pos = np.arange(len(mean_dataset_data))
 
 fig = plt.figure()
-plt.bar(y_pos, final_data, align="center", alpha=0.5, width=0.3)
+plt.bar(y_pos, mean_dataset_data, align="center", alpha=0.5, width=0.3)
 plt.xticks(y_pos, list(labels.keys()))
 plt.ylabel("Mean Score")
 plt.title("Music Descriptors Dataset")

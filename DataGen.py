@@ -262,21 +262,26 @@ def processKerasDataMethodB(
         y.append(song_data)
 
     x = []
+    new_y = []
     for song in tqdm(y):
         song_train = []
+        song_label = []
         for i in range(len(song)):
             if i < sequence_size:
                 i = sequence_size
-
+            song_label.append(song[i])
             lastNotes = []
             for j in range(sequence_size):
-                lastNotes.append(song[i - j])
+                lastNotes.append(song[i - (j + 1)])
             song_train.append(lastNotes)
         x.append(song_train)
+        new_y.append(song_label)
+    
+    del y
 
     print("...Done\n")
     # debug to not break compatibility
-    return x, y, tokens
+    return x, new_y, tokens
 
 
 def getNoteTokenB(notePitch, noteVelocity, tokens, velocities):
@@ -358,11 +363,12 @@ def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max
     while canEmplace:
         currentDuration = abs(durations[i])
         i += 1
-        if currentDuration not in tokens:
-            tokens[currentDuration] = counter
-            counter += 1
-        if len(tokens) >= current_counter + (remaining_tokens / 2):
-            canEmplace = False
+        if currentDuration <= 1.0:
+            if currentDuration not in tokens:
+                tokens[currentDuration] = counter
+                counter += 1
+            if len(tokens) >= current_counter + (remaining_tokens / 2):
+                canEmplace = False
         
     last_duration = counter - 1
     current_counter = counter
@@ -371,13 +377,14 @@ def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max
     i = 0
     offsets = list(offsets_occurences.keys())
     while canEmplace:
-        currentDuration = abs(durations[i])
+        currentOffset = abs(offsets[i])
         i += 1
-        if currentDuration not in tokens:
-            tokens[currentDuration] = counter
-            counter += 1
-        if len(tokens) >= current_counter + (remaining_tokens / 2):
-            canEmplace = False
+        if currentOffset <= 2.0:
+            if currentOffset not in tokens:
+                tokens[currentOffset] = counter
+                counter += 1
+            if len(tokens) >= current_counter + (remaining_tokens / 2):
+                canEmplace = False
 
         
 
@@ -514,8 +521,6 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
     print("Converting raw notes to MIDI")
     mid = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(0)
-    inv_tokens = dict((v, k) for k, v in tokens.items())
-    normalizer = 1
     timestepCounter = 0
     # what notes are currently being played
     current_notes = {}
@@ -538,7 +543,7 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
             for note, timing in current_notes.items():
                 if note not in rounded_timestep:
                     # print("Logic is sound, this is being called :) ")
-                    currentToken = abs(int(note * normalizer))
+                    currentToken = abs(int(note))
                     if note >= 1:
                         pitch, velocity = tokens[currentToken]
                         if pitch > 127:
@@ -561,7 +566,7 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
 
     if bool(current_notes) == True:
         for note, timing in current_notes.items():
-            currentToken = abs(int(note * normalizer))
+            currentToken = abs(int(note))
             if currentToken != 0:
                 pitch, velocity = tokens[currentToken]
                 if pitch > 127:
