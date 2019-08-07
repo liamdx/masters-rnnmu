@@ -194,7 +194,7 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
             # token_pitch = bisect.bisect_left(list(pitch_tokens.keys()), note_pitch)
 
 
-            newLabels.append((token_pitch, token_offset, token_duration, token_velocity))
+            newLabels.append((token_pitch, token_velocity, token_duration, token_offset))
 
             priorNotes = []
             for k in range(sequenceSize):
@@ -208,7 +208,7 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
                 ptoken_duration = getNoteTokenA(pnote_duration, duration_tokens)
                 ptoken_velocity = getNoteTokenA(pnote_velocity, velocity_tokens)
                 ptoken_pitch = token_pitch = getNoteTokenA(pnote_pitch, pitch_tokens)
-                priorNotes.append((ptoken_pitch, ptoken_offset, ptoken_duration, ptoken_velocity))
+                priorNotes.append((ptoken_pitch, ptoken_velocity , ptoken_duration, ptoken_offset))
             
             newNotes.append(priorNotes)
 
@@ -494,9 +494,9 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     for note in tqdm(notes):
         # remap output of neural network / normalise notes
         pitch_token = clamp(int(note[0][0]), 0, len(tokens))
-        offset_token = clamp(int(note[0][1]),0, len(tokens))
+        velocity_token  = clamp(int(note[0][1]), 0, len(tokens))
         duration_token = clamp(int(note[0][2]), 0 , len(tokens))
-        velocity_token  = clamp(int(note[0][3]), 0, len(tokens))
+        offset_token = clamp(int(note[0][3]),0, len(tokens))
         
         pitch_token = int(clamp(pitch_token, 1, token_cutoffs["last_pitch"]))
         velocity_token = int(clamp(offset_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))

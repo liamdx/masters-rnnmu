@@ -139,13 +139,6 @@ processedData, processedLabels, tokens, token_cutoffs = processKerasDataMethodA(
 )
 del data  # no longer need unscaled data
 
-pitches_occurences, offsets_occurences, durations_occurences, velocities_occurences = countTokenOccurences(
-        data
-    )
-
-
-tokens, token_cutoffs = getTokensA(pitches_occurences, durations_occurences, offsets_occurences, 500)
-    
 
 # train / test split
 trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processedLabels)
@@ -164,7 +157,10 @@ loaded_model = loadModel(filename + ".h5")
 # take some test data
 tempData = copy.deepcopy(testX)
 
+testComp = [testY[0:100]]
+convertMethodADataToMidi(testComp, inv_tokens, token_cutoffs, "DebugMidiTest")
 # inverse tokens for conversion back to midi
+
 inv_tokens = invertDictionary(tokens)
 # produce 20 compositions
 for i in range(30):
