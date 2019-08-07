@@ -493,10 +493,10 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     lastNoteStart = 0
     for note in tqdm(notes):
         # remap output of neural network / normalise notes
-        pitch_token = int(note[0][0])
-        offset_token = int(note[0][1])
-        duration_token = int(note[0][2])
-        velocity_token  = int(note[0][3])
+        pitch_token = clamp(int(note[0][0]), 0, len(tokens))
+        offset_token = clamp(int(note[0][1]),0, len(tokens))
+        duration_token = clamp(int(note[0][2]), 0 , len(tokens))
+        velocity_token  = clamp(int(note[0][3]), 0, len(tokens))
         
         pitch_token = int(clamp(pitch_token, 1, token_cutoffs["last_pitch"]))
         velocity_token = int(clamp(offset_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))

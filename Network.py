@@ -205,8 +205,9 @@ def MethodBC2(trainX, testX, trainY, testY, tokens, params):
     return model, filename
 
 
-def MethodAC1(trainX, testX, trainY, testY, params):
+def MethodAC1(trainX, testX, trainY, testY, tokens, params):
     K.clear_session()
+    numTokens = len(tokens)
     model = Sequential()
     model.add(
         CuDNNLSTM(
@@ -214,12 +215,14 @@ def MethodAC1(trainX, testX, trainY, testY, params):
         )
     )
     model.add(Dropout(0.3))
-    model.add(CuDNNLSTM(512, return_sequences=True))
-    model.add(Dropout(0.3))
+    model.add(CuDNNLSTM(256, return_sequences=True))
     model.add(Dense(256, activation="elu"))
-    model.add(CuDNNLSTM(params["sequence_length"]))
+    model.add(CuDNNLSTM(params["sequence_length"] * 4, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(Dense(params["sequence_length"], activation="elu"))
+    model.add(Dense(params["sequence_length"] * 4, activation="elu"))
+    model.add(CuDNNLSTM(numTokens))
+    model.add(Dropout(0.3))
+    model.add(Dense(numTokens, activation="elu"))
     model.add(Dense(4, activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
     model.compile(
