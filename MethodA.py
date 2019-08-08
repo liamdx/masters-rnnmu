@@ -82,7 +82,7 @@ def runFullMethodA():
     del model
     
     # Load a pretrained model and generate some music
-    # filename = "norm-test-2019-07-28-13-27-26"
+    # ensures configuration is reproducable
     loaded_model = loadModel(filename + ".h5")
     
     
@@ -116,10 +116,10 @@ def runFullMethodA():
 params = {}
 params["learning_rate"] = 0.00003
 params["batch_size"] = 128
-params["epochs"] = 10
+params["epochs"] = 12s
 params["dataset"] = "classical"
-params["sequence_length"] = 75
-params["data_amount"] = 1.0
+params["sequence_length"] = 20
+params["data_amount"] = 0.2
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
@@ -143,7 +143,7 @@ del data  # no longer need unscaled data
 
 
 # train / test split
-trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processedLabels)
+trainX, testX, trainY, testY = genTokenizedNetworkData(processedData, processedLabels, 0.25)
 del processedData
 del processedLabels
 
@@ -181,7 +181,7 @@ for i in range(30):
     sample = tempData[bounds[0] : bounds[0] + 50]
     # Use network to generate some notes
     composition = startMethodANetworkRun(
-        loaded_model, sample, params["sequence_length"], 150
+        loaded_model, sample, params["sequence_length"], 600
     )
     # Output to .midi file
     convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
