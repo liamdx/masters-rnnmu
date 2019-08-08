@@ -54,12 +54,16 @@ def aggregateData(formatted_data, labels):
 
 
 def plotFeatureComparison(organised_data, feature):
-    print("Hello")
+
     # import statistics
     # numbers = [G[key] for key in G]
     # mean_ = statistics.mean(numbers)
+    
     dat = organised_data[feature]
     plot_dat = {}
+    means = []
+    stds = [] 
+    
     for dk, dv in dat.items():
         plot_dat[dk] = {}
         numbers = [dv[key] for key in dv]
@@ -67,36 +71,49 @@ def plotFeatureComparison(organised_data, feature):
         d_mean = statistics.mean(numbers)
         plot_dat[dk]["std"] = d_std
         plot_dat[dk]["mean"] = d_mean
+        means.append(d_mean)
+        stds.append(d_std)
 
     fig, ax = plt.subplots()
-    index = np.arange(1)
-    bar_width = 0.15
+    index = np.arange(3)
+    bar_width = 0.5
     opacity = 0.8
 
-
+    ax.yaxis.grid(True)
+    
     plt.title("%s comparison" % feature)
-    rects1 = plt.bar(index, plot_dat["dataset"]["mean"], bar_width,
+    plt.xticks(np.arange(3), ("Dataset", "Generated", "Random"))
+    plt.ylabel("Descriptor Value")
+    plt.xlabel("\nComposition Type")
+    
+    rects = plt.bar(index, means, bar_width,
     alpha=opacity,
-    color='r',
+    color='#1f77b4',
     label='Dataset',
     align="center",
-    yerr=plot_dat["dataset"]["std"])
+    yerr=stds,
+    capsize=6,
+    ecolor="black")
+    
+#    rects2 = plt.bar(index + bar_width, plot_dat["generated"]["mean"], bar_width,
+#    alpha=opacity,
+#    color='#d62728',
+#    label='Generated',
+#    align="center",
+#    yerr=plot_dat["generated"]["std"],
+#    capsize=8,
+#    ecolor="black")
+#    
+#    rects3 = plt.bar(index + (bar_width * 2), plot_dat["random"]["mean"], bar_width,
+#    alpha=opacity,
+#    color='#2ca02c',
+#    label='Random',
+#    align="center",
+#    yerr=plot_dat["random"]["std"],
+#    capsize=8,
+#    ecolor="black"
+#    )
 
-    rects2 = plt.bar(index + bar_width, plot_dat["generated"]["mean"], bar_width,
-    alpha=opacity,
-    color='g',
-    label='Generated',
-    align="center",
-    yerr=plot_dat["generated"]["std"])
-
-    rects3 = plt.bar(index + (bar_width * 2), plot_dat["random"]["mean"], bar_width,
-    alpha=opacity,
-    color='b',
-    label='Random',
-    align="center",
-    yerr=plot_dat["random"]["std"])
-
-    plt.legend()
     plt.show()
 
     return plot_dat
@@ -109,7 +126,6 @@ labels = {
     "Average Note Duration": 2,  # Length of note
     "Average Number of Simultaneous Pitches": 3,  # how many notes are active at once
     "Variability of Note Durations": 4,  # how much does the note length vary
-    # "Rhythmic Value Variability": 5,  # similar but more broad (e.g. overall rhythmic feel of the piece)
     "Metrical Diversity": 5,  # again similar
     "Chromatic Motion": 6,  # motion of melody is chromatic (one after the other e.g. c1 -> c#1 -> d1 ->d#1)
     "Contrary Motion": 7,  # motion of melody(s) run counter to one another (indicator of complexity)
@@ -178,43 +194,4 @@ del generated_final_data
 for k, v in labels.items():
     x = plotFeatureComparison(organised_data, k)
 
-
-
-
-
-# # Overall comparison of aggregated results
-# # Data, Generated & Random
-# fig, ax  = plt.subplots()
-# index = np.arange(len(mean_dataset_data))
-# bar_width = 0.35
-# opacity = 0.8
-
-# rects1 = plt.bar(index, mean_dataset_data, bar_width,
-# alpha=opacity,
-# color='b',
-# label='Dataset',
-# align="center")
-
-# rects2 = plt.bar(index + bar_width, mean_generated_data, bar_width,
-# alpha=opacity,
-# color='g',
-# label='Generated',
-# align="center")
-
-# rects2 = plt.bar(index + (bar_width * 2), mean_generated_data, bar_width,
-# alpha=opacity,
-# color='r',
-# label='Generated',align="center")
-
-
-# plt.xlabel('Descriptor')
-# plt.ylabel('Scores')
-# plt.title('MIR Descriptors')
-# plt.xticks(index + bar_width, labels ,rotation=30)
-
-
-# fig.tight_layout()
-# # plt.tight_layout()
-# plt.legend()
-# plt.show()
 
