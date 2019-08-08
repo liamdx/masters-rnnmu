@@ -114,12 +114,12 @@ def runFullMethodA():
 
 
 params = {}
-params["learning_rate"] = 0.001
+params["learning_rate"] = 0.00003
 params["batch_size"] = 128
-params["epochs"] = 20
+params["epochs"] = 10
 params["dataset"] = "classical"
 params["sequence_length"] = 75
-params["data_amount"] = 0.05
+params["data_amount"] = 1.0
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
