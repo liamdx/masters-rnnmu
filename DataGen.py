@@ -15,7 +15,9 @@ import collections
 import operator
 import mido
 from collections import OrderedDict
-import bisect
+from sortedcontainers import SortedDict
+from itertools import islice
+
 
 def getCleanedFilePaths(dataset):
     subfolders = [f.path for f in os.scandir(dataset) if f.is_dir()]
@@ -176,6 +178,8 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
         for j in range(len(data[i])):
             if j < sequenceSize:
                j = sequenceSize
+               if j >= len(data[i]):
+                   break
             note = data[i][j]
 
             note_time = note[0]
@@ -217,9 +221,15 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
 
 
 def invertDictionary(old_dict):
-    inverted_dict = OrderedDict([[v,k] for k,v in old_dict.items()])
+    inverted_dict = SortedDict([[v,k] for k,v in old_dict.items()])
     return(inverted_dict)
 
+def closest(sorted_dict, key):
+    "Return closest key in `sorted_dict` to given `key`."
+    assert len(sorted_dict) > 0
+    keys = list(islice(sorted_dict.irange(minimum=key), 1))
+    keys.extend(islice(sorted_dict.irange(maximum=key, reverse=True), 1))
+    return min(keys, key=lambda k: abs(key - k))
 
 def processKerasDataMethodB(
     data, sequence_size, num_timesteps, timestep_resolution, num_simultaneous_notes
@@ -295,18 +305,9 @@ def getNoteTokenB(notePitch, noteVelocity, tokens, velocities):
 
 
 def getNoteTokenA(value, dictionary):
-    if value in list(dictionary.keys()):
-        return(dictionary[value])
-    else:
-        lowestDifference = 3000
-        for k, v in dictionary.items():
-            diff = abs(k - value)
-            if diff < lowestDifference:
-                lowestDifference = k
-        return(dictionary[lowestDifference])
+    key = closest(dictionary, value)
+    return(dictionary[key])
         
-
-
 
 def finaliseTokenNetworkData(x, y):
     print("Finalising network data")
@@ -331,7 +332,7 @@ def slice_odict(odict, start=None, end=None):
     ])
 
 def getTokensA(pitches_occurences, durations_occurences, offsets_occurences, max_tokens):
-    tokens = OrderedDict()
+    tokens = SortedDict()
     tokens[0] = 0
     counter = 1
     
@@ -491,22 +492,24 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
     lastNoteStart = 0
-    for note in tqdm(notes):
+    for note in tqdm(notes[0]):
         # remap output of neural network / normalise notes
-        pitch_token = clamp(int(note[0][0]), 0, len(tokens))
-        velocity_token  = clamp(int(note[0][1]), 0, len(tokens))
-        duration_token = clamp(int(note[0][2]), 0 , len(tokens))
-        offset_token = clamp(int(note[0][3]),0, len(tokens))
+        pitch_token = clamp(int(note[0]), 0, len(tokens))
+        velocity_token  = clamp(int(note[1]), 0, len(tokens))
+        duration_token = clamp(int(note[2]), 0 , len(tokens))
+        offset_token = clamp(int(note[3]),0, len(tokens))
         
         pitch_token = int(clamp(pitch_token, 1, token_cutoffs["last_pitch"]))
-        velocity_token = int(clamp(offset_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))
-        velocity_token = int(clamp(offset_token, token_cutoffs["last_velocity"] + 1, token_cutoffs["last_duration"]))
-        velocity_token = int(clamp(offset_token, token_cutoffs["last_duration"] + 1, token_cutoffs["last_offset"]))
+        velocity_token = int(clamp(velocity_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))
+        duration_token = int(clamp(duration_token, token_cutoffs["last_velocity"] + 1, token_cutoffs["last_duration"]))
+        offset_token = int(clamp(offset_token, token_cutoffs["last_duration"] + 1, token_cutoffs["last_offset"]))
         
         pitch = np.uint8(tokens[pitch_token])
         offset = tokens[offset_token]
         duration = tokens[duration_token]
         velocity = np.uint8(tokens[velocity_token])
+
+        print("Note props: Pitch = %d, Velocity = %d, duration = %f, offset = %f" % (pitch, velocity, duration, offset))
 
         start = lastNoteStart + offset
         pmnote = pretty_midi.Note(velocity, pitch, start, start + duration)
