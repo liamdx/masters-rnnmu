@@ -43,11 +43,11 @@ from tqdm import tqdm
 def runFullMethodA():
     # parameter dictionary
     params = {}
-    params["learning_rate"] = 0.000003
+    params["learning_rate"] = 0.0000003
     params["batch_size"] = 128
     params["epochs"] = 20
     params["dataset"] = "classical"
-    params["sequence_length"] = 10
+    params["sequence_length"] = 50
     params["data_amount"] = 1.0
     
     # get the filepaths and load for all .midi files in the dataset
@@ -116,10 +116,10 @@ def runFullMethodA():
 params = {}
 params["learning_rate"] = 0.00003
 params["batch_size"] = 128
-params["epochs"] = 12s
+params["epochs"] = 12
 params["dataset"] = "classical"
-params["sequence_length"] = 20
-params["data_amount"] = 0.2
+params["sequence_length"] = 100
+params["data_amount"] = 0.4
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
