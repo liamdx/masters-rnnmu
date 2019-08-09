@@ -79,7 +79,7 @@ def startFullMethodBRun(num_compositions):
     params["dataset"] = "classical"
     params["sequence_length"] = 100
     params["num_simultaneous_notes"] = 4
-    params["data_amount"] = 1.0
+    params["data_amount"] = 0.5
     
     # get the filepaths and load for all .midi files in the dataset
     filepaths = getCleanedFilePaths(params["dataset"])
@@ -176,7 +176,7 @@ def startFullMethodARun(num_compositions):
     # inverse tokens for conversion back to midi
     inv_tokens = invertDictionary(tokens)
     # produce 20 compositions
-    for i in range(num_compositions):
+    for i in tqdm(range(num_compositions)):
         upperbound = len(tempData)
         bounds = []
         for j in range(2):

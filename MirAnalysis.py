@@ -75,14 +75,14 @@ def plotFeatureComparison(organised_data, feature):
         stds.append(d_std)
 
     fig, ax = plt.subplots()
-    index = np.arange(3)
+    index = np.arange(len(dat))
     bar_width = 0.5
     opacity = 0.8
 
     ax.yaxis.grid(True)
     
     plt.title("%s comparison" % feature)
-    plt.xticks(np.arange(3), ("Dataset", "Generated", "Random"))
+    plt.xticks(np.arange(len(dat)), dat.keys())
     plt.ylabel("Descriptor Value")
     plt.xlabel("\nComposition Type")
     
@@ -119,18 +119,22 @@ labels = {
 
 
 training_analysis_filepath = "res/analysis_data/dataset_analysis.xml"
-generated_analysis_filepath = "res/analysis_data/generated_analysis.xml" # generated_analysis.xml
+methodA_analysis_filepath = "res/analysis_data/generated_analysis.xml" 
+methodB_analysis_filepath = "res/analysis_data/generated_analysis.xml" 
 random_analysis_filepath = "res/analysis_data/random_analysis.xml" # random_analysis.xml
 
 dataset_raw = parseAnalysisData(training_analysis_filepath)
 dataset_data = deepcopy(dataset_raw["feature_vector_file"]["data_set"])
-generated_raw = parseAnalysisData(generated_analysis_filepath)
-generated_data = deepcopy(generated_raw["feature_vector_file"]["data_set"])
+methodA_raw = parseAnalysisData(methodA_analysis_filepath)
+methodA_data = deepcopy(methodA_raw["feature_vector_file"]["data_set"])
+methodB_raw = parseAnalysisData(methodB_analysis_filepath)
+methodB_data = deepcopy(methodB_raw["feature_vector_file"]["data_set"])
 random_raw = parseAnalysisData(random_analysis_filepath)
 random_data = deepcopy(random_raw["feature_vector_file"]["data_set"])
 
 del dataset_raw
-del generated_raw
+del methodA_raw
+del methodB_raw
 del random_raw
 
 # list of all the descriptors we extract from the midi files
@@ -138,21 +142,25 @@ del random_raw
 features = getFeatures(dataset_data)
 
 dataset_final_data = formatData(dataset_data)
-generated_final_data = formatData(generated_data)
+methodA_final_data = formatData(methodA_data)
+methodB_final_data = formatData(methodB_data)
 random_final_data = formatData(random_data)
 
 del dataset_data
-del generated_data
+del methodA_data
+del methodB_data
 del random_data
 
 mean_dataset_data = aggregateData(dataset_final_data, labels)
-mean_generated_data = aggregateData(generated_final_data, labels)
+mean_methodA_data = aggregateData(methodA_final_data, labels)
+mean_methodB_data = aggregateData(methodB_final_data, labels)
 mean_random_data = aggregateData(random_final_data, labels)
 
 
 all_data = {}
 all_data["dataset"] = dataset_final_data
-all_data["generated"] = generated_final_data
+all_data["methodA"] = methodA_final_data
+all_data["methodB"] = methodB_final_data
 all_data["random"] = random_final_data
 
 
@@ -168,7 +176,8 @@ for k, v in labels.items():
 del all_data
 del dataset_final_data
 del random_final_data
-del generated_final_data
+del methodA_final_data
+del methodB_final_data
 
 
 for k, v in labels.items():

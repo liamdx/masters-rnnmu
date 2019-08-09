@@ -492,7 +492,7 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
     lastNoteStart = 0
-    for note in tqdm(notes[0]):
+    for note in notes[0]:
         # remap output of neural network / normalise notes
         pitch_token = clamp(int(note[0]), 0, len(tokens))
         velocity_token  = clamp(int(note[1]), 0, len(tokens))
@@ -528,7 +528,7 @@ def convertMethodBDataToMidi(data, tokens, model_name, timestep_resolution):
     # what notes are currently being played
     current_notes = {}
      # unnormalize the data at each step
-    for d in tqdm(data):
+    for d in data:
         for timestep in d:
             # for all notes in this timestep
             rounded_timestep = [round(x) for x in timestep]
