@@ -94,26 +94,6 @@ def plotFeatureComparison(organised_data, feature):
     yerr=stds,
     capsize=6,
     ecolor="black")
-    
-#    rects2 = plt.bar(index + bar_width, plot_dat["generated"]["mean"], bar_width,
-#    alpha=opacity,
-#    color='#d62728',
-#    label='Generated',
-#    align="center",
-#    yerr=plot_dat["generated"]["std"],
-#    capsize=8,
-#    ecolor="black")
-#    
-#    rects3 = plt.bar(index + (bar_width * 2), plot_dat["random"]["mean"], bar_width,
-#    alpha=opacity,
-#    color='#2ca02c',
-#    label='Random',
-#    align="center",
-#    yerr=plot_dat["random"]["std"],
-#    capsize=8,
-#    ecolor="black"
-#    )
-
     plt.show()
 
     return plot_dat

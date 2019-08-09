@@ -211,7 +211,7 @@ def MethodAC1(trainX, testX, trainY, testY, tokens, params):
     model = Sequential()
     model.add(
         CuDNNLSTM(
-            units=256, input_shape=(params["sequence_length"], 4), return_sequences=True
+            units=512, input_shape=(params["sequence_length"], 4), return_sequences=True
         )
     )
     model.add(Dropout(0.3))
@@ -222,7 +222,7 @@ def MethodAC1(trainX, testX, trainY, testY, tokens, params):
     model.add(Dropout(0.3))
     model.add(Dense(params["sequence_length"], activation="elu"))
     model.add(CuDNNLSTM(numTokens))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(Dense(numTokens, activation="elu"))
     model.add(Dense(4, activation="elu"))
     model_optimizer = adam(lr=params["learning_rate"])
