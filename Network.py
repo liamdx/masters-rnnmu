@@ -217,7 +217,7 @@ def MethodAC1(trainX, testX, trainY, testY, tokens, params):
     model.add(Dropout(0.3))
     model.add(CuDNNLSTM(256, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(Dense(256, activation="elu"))
+    model.add(Dense(512, activation="elu"))
     model.add(CuDNNLSTM(numTokens, return_sequences=True))
     model.add(Dropout(0.3))
     model.add(Dense(numTokens, activation="elu"))
