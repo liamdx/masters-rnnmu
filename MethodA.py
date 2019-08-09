@@ -9,37 +9,6 @@ import random
 import csv
 from tqdm import tqdm
 
-
-#from https://stackoverflow.com/questions/50459119/writing-a-3d-numpy-array-to-a-csv-file?noredirect=1&lq=1
-    
-#x = np.array(processedData).tolist()
-#with open("MethodA_X_DATA.csv", "w") as csvfile:
-#    writer = csv.writer(csvfile, delimiter=',')
-#    writer.writerows(x)
-#
-#y = np.array(processedLabels).tolist()
-#with open("MethodA_Y_LABELS.csv", "w") as csvfile:
-#    writer = csv.writer(csvfile, delimiter=',')
-#    writer.writerows(y)
-#
-#
-#with open ("MethodA_X_DATA.csv", "r") as f:
-#    reader = csv.reader(f)
-#    examples = list(reader)
-#
-#nwexamples = []
-#for row in tqdm(examples):
-#    nwrow = []
-#    for r in row:
-#        nwrow.append(eval(r))
-#    nwexamples.append(nwrow)
-#nwx = np.array(nwexamples)
-#
-#del nwx
-#del nwexamples
-#del examples
-
-
 def runFullMethodA():
     # parameter dictionary
     params = {}
@@ -73,7 +42,7 @@ def runFullMethodA():
     
     
     # train / test split
-    trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processedLabels)
+    trainX, testX, trainY, testY = genTokenizedNetworkData(processedData, processedLabels, 0.25)
     del processedData
     del processedLabels
     
@@ -115,10 +84,10 @@ def runFullMethodA():
 
 params = {}
 params["learning_rate"] = 0.000005
-params["batch_size"] = 128
+params["batch_size"] = 64
 params["epochs"] = 12
 params["dataset"] = "classical"
-params["sequence_length"] = 100
+params["sequence_length"] = 50
 params["data_amount"] = 0.4
 
 # get the filepaths and load for all .midi files in the dataset
@@ -163,12 +132,12 @@ tempData = copy.deepcopy(testX)
 
 
 testComp = [testY[0:100]]
+
+# inverse tokens for conversion back to midi
 inv_tokens = invertDictionary(tokens)
 
 
 convertMethodADataToMidi(testComp, inv_tokens, token_cutoffs, "DebugMidiTest")
-# inverse tokens for conversion back to midi
-
 
 # produce 20 compositions
 for i in range(30):
@@ -185,8 +154,3 @@ for i in range(30):
     )
     # Output to .midi file
     convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
-
-#del loaded_model
-#del tempData
-#del inv_tokens
-#del tokens
