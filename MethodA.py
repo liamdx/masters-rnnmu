@@ -85,7 +85,7 @@ def runFullMethodA():
 params = {}
 params["learning_rate"] = 0.000005
 params["batch_size"] = 64
-params["epochs"] = 12
+params["epochs"] = 40
 params["dataset"] = "classical"
 params["sequence_length"] = 50
 params["data_amount"] = 0.4
