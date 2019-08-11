@@ -20,11 +20,17 @@ def startMethodANetworkRun(model, sequence, sequence_length, notesToProduce):
     for i in tqdm(range(notesToProduce)):
         # sequence shape = (1,notesToProduce,4)
         # pred shape = (1,4)
+        print("Sample before substituion")
+        print(sample)
         pred = model.predict(sample)
         # shift the array down so that the last row = 0,0,0,0
         # then replace the null values with pred
-        sample = np.roll(sample, -1, axis=1)
-        sample[0, len(sample[0]) - 1] = pred[0]
+        print("Pred")
+        print(pred)
+        sample = np.roll(sample, 1, axis=1)
+        sample[0, 0] = pred[0]
+        print("Sample after substituion")
+        print(sample)
         preds.append(pred)
 
     return preds
@@ -127,6 +133,7 @@ def startFullMethodBRun(num_compositions):
             bounds.append(random.randint(0, upperbound))
         bounds.sort()
         print(bounds)
+        human_composition = [testY[bounds[0]:bounds[0]+200]]
         sample = tempData[bounds[0] : bounds[0] + 1]
         # Use network to generate some notes
         composition = startMethodBNetworkRun(
@@ -134,13 +141,14 @@ def startFullMethodBRun(num_compositions):
         )
         # Output to .midi file
         convertMethodBDataToMidi(composition, tokens, filename, params["timestep_resolution"])
+        convertMethodBDataToMidi(human_composition, tokens, "MethodB-Human", params["timestep_resolution"])
     
     del loaded_model
     del tempData
 
 
 
-def startFullMethodARun(num_compositions):
+def startFullMethodARun(num_compositions, filename = "final_method_a_model"):
     # parameter dictionary
     params = {}
     params["learning_rate"] = 0.000003
@@ -168,7 +176,6 @@ def startFullMethodARun(num_compositions):
     del processedData
     del processedLabels
 
-    filename = "final_method_a_model"
     loaded_model = loadModel(filename + ".h5")
     # take some test data
     tempData = copy.deepcopy(testX)
@@ -184,13 +191,14 @@ def startFullMethodARun(num_compositions):
         bounds.sort()
         print(bounds)
         sample = tempData[bounds[0] : bounds[0] + 50]
+        human_composition = [testY[bounds[0]:bounds[0]+200]]
         # Use network to generate some notes
         composition = startMethodANetworkRun(
             loaded_model, sample, params["sequence_length"], 150
         )
         # Output to .midi file
         convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
-    
+        convertMethodADataToMidi(human_composition, inv_tokens, token_cutoffs, "MethodA-Human")
     del loaded_model
     del tempData
     del inv_tokens

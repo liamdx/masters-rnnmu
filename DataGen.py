@@ -214,6 +214,7 @@ def processKerasDataMethodA(data, timeScalars, sequenceSize):
                 ptoken_pitch = token_pitch = getNoteTokenA(pnote_pitch, pitch_tokens)
                 priorNotes.append((ptoken_pitch, ptoken_velocity , ptoken_duration, ptoken_offset))
             
+            priorNotes.reverse()
             newNotes.append(priorNotes)
 
     return (np.array(newNotes), np.array(newLabels), tokens, token_cutoffs)
@@ -509,7 +510,7 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
         duration = tokens[duration_token]
         velocity = np.uint8(tokens[velocity_token])
 
-        print("Note props: Pitch = %d, Velocity = %d, duration = %f, offset = %f" % (pitch, velocity, duration, offset))
+        # print("Note props: Pitch = %d, Velocity = %d, duration = %f, offset = %f" % (pitch, velocity, duration, offset))
 
         start = lastNoteStart + offset
         pmnote = pretty_midi.Note(velocity, pitch, start, start + duration)

@@ -75,7 +75,6 @@ def runFullMethodBC1():
         for j in range(2):
             bounds.append(random.randint(0, upperbound))
         bounds.sort()
-        print(bounds)
         sample = tempData[bounds[0] : bounds[0] + 1]
         # Use network to generate some notes
         composition = startMethodBNetworkRun(

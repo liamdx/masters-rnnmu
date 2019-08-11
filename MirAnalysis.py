@@ -106,15 +106,15 @@ labels = {
     "Average Note Duration": 2,  # Length of note
     "Average Number of Simultaneous Pitches": 3,  # how many notes are active at once
     "Variability of Note Durations": 4,  # how much does the note length vary
-    "Metrical Diversity": 5,  # again similar
+    "Metrical Diversity": 5,  # Broadfer than noteduration, rhythmic feel of a section
     "Chromatic Motion": 6,  # motion of melody is chromatic (one after the other e.g. c1 -> c#1 -> d1 ->d#1)
-    "Contrary Motion": 7,  # motion of melody(s) run counter to one another (indicator of complexity)
+    "Contrary Motion": 7,  # motion of melody(s) run counter to one another (indicator of complexity) 
     "Stepwise Motion": 8,  # motion of melody moves in steps of they key (e.g. c3->e3->g3 perfect c major)
     "Similar Motion": 9,  # motion of melody moves in same way, with different pitches (again indicator of complexityy)
-    "Parallel Motion": 10,
-    "Variation of Dynamics": 11,  # how much dynamics variation is there
-    "Melodic Embellishments": 12,  # small melodic passages that slightly change or enhance a larger music phrase (complexity)
-    "Repeated Notes": 13,  # number of notes that are repeated one after the other (indicator of low complexity)
+    "Variation of Dynamics": 10,  # how much dynamics variation is there
+    "Melodic Embellishments": 11,  # small melodic passages that slightly change or enhance a larger music phrase (complexity)
+    "Repeated Notes": 12,  # number of notes that are repeated one after the other (indicator of low complexity)
+    "Melodic Pitch Variety"
 }
 
 

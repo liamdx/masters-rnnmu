@@ -83,19 +83,19 @@ def runFullMethodA():
 
 
 params = {}
-params["learning_rate"] = 0.000005
-params["batch_size"] = 64
+params["learning_rate"] = 0.00001
+params["batch_size"] = 128
 params["epochs"] = 40
 params["dataset"] = "classical"
-params["sequence_length"] = 50
-params["data_amount"] = 0.4
+params["sequence_length"] = 5
+params["data_amount"] = 0.3
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
 # load appropriate amount of dataset in
 # limit the notes to the range c3 - c6 (3 full octaves)
 midi_data, key_distributions = loadMidiData(
-    filepaths[: int(len(filepaths) * params["data_amount"]) - 1], 48, 83
+    filepaths[: int(len(filepaths) * params["data_amount"]) - 1], 36, 84
 )
 
 
@@ -147,10 +147,12 @@ for i in range(30):
         bounds.append(random.randint(0, upperbound))
     bounds.sort()
     print(bounds)
-    sample = tempData[bounds[0] : bounds[0] + 50]
+    sample = tempData[bounds[0] : bounds[0]+1]
+    human_composition = [testY[bounds[0]:bounds[0]+200]]
     # Use network to generate some notes
     composition = startMethodANetworkRun(
-        loaded_model, sample, params["sequence_length"], 600
+        loaded_model, sample, params["sequence_length"], 300
     )
     # Output to .midi file
     convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
+    convertMethodADataToMidi(human_composition, inv_tokens, token_cutoffs, "MethodA-Human")
