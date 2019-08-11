@@ -493,12 +493,13 @@ def convertMethodADataToMidi(notes, tokens, token_cutoffs, model_name):
     inst = pretty_midi.Instrument(0)
     # inst.program = 0
     lastNoteStart = 0
-    for note in notes[0]:
+    for note in notes:
         # remap output of neural network / normalise notes
-        pitch_token = clamp(int(note[0]), 0, len(tokens))
-        velocity_token  = clamp(int(note[1]), 0, len(tokens))
-        duration_token = clamp(int(note[2]), 0 , len(tokens))
-        offset_token = clamp(int(note[3]),0, len(tokens))
+        n = note[0]
+        pitch_token = clamp(int(n[0]), 0, len(tokens))
+        velocity_token  = clamp(int(n[1]), 0, len(tokens))
+        duration_token = clamp(int(n[2]), 0 , len(tokens))
+        offset_token = clamp(int(n[3]),0, len(tokens))
         
         pitch_token = int(clamp(pitch_token, 1, token_cutoffs["last_pitch"]))
         velocity_token = int(clamp(velocity_token, token_cutoffs["last_pitch"] + 1, token_cutoffs["last_velocity"]))

@@ -20,17 +20,17 @@ def startMethodANetworkRun(model, sequence, sequence_length, notesToProduce):
     for i in tqdm(range(notesToProduce)):
         # sequence shape = (1,notesToProduce,4)
         # pred shape = (1,4)
-        print("Sample before substituion")
-        print(sample)
+        # print("Sample before substituion")
+        # print(sample)
         pred = model.predict(sample)
         # shift the array down so that the last row = 0,0,0,0
         # then replace the null values with pred
-        print("Pred")
-        print(pred)
+        # print("Pred")
+        # print(pred)
         sample = np.roll(sample, 1, axis=1)
         sample[0, 0] = pred[0]
-        print("Sample after substituion")
-        print(sample)
+        # print("Sample after substituion")
+        # print(sample)
         preds.append(pred)
 
     return preds

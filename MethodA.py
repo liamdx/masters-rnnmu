@@ -83,12 +83,12 @@ def runFullMethodA():
 
 
 params = {}
-params["learning_rate"] = 0.00001
-params["batch_size"] = 128
-params["epochs"] = 40
+params["learning_rate"] = 0.000002
+params["batch_size"] = 64
+params["epochs"] = 90
 params["dataset"] = "classical"
-params["sequence_length"] = 5
-params["data_amount"] = 0.3
+params["sequence_length"] = 15
+params["data_amount"] = 1.0
 
 # get the filepaths and load for all .midi files in the dataset
 filepaths = getCleanedFilePaths(params["dataset"])
@@ -137,10 +137,10 @@ testComp = [testY[0:100]]
 inv_tokens = invertDictionary(tokens)
 
 
-convertMethodADataToMidi(testComp, inv_tokens, token_cutoffs, "DebugMidiTest")
+# convertMethodADataToMidi(testComp, inv_tokens, token_cutoffs, "DebugMidiTest")
 
 # produce 20 compositions
-for i in range(30):
+for i in range(100):
     upperbound = len(tempData)
     bounds = []
     for j in range(2):
@@ -148,11 +148,10 @@ for i in range(30):
     bounds.sort()
     print(bounds)
     sample = tempData[bounds[0] : bounds[0]+1]
-    human_composition = [testY[bounds[0]:bounds[0]+200]]
     # Use network to generate some notes
     composition = startMethodANetworkRun(
         loaded_model, sample, params["sequence_length"], 300
     )
     # Output to .midi file
     convertMethodADataToMidi(composition, inv_tokens, token_cutoffs, filename)
-    convertMethodADataToMidi(human_composition, inv_tokens, token_cutoffs, "MethodA-Human")
+
