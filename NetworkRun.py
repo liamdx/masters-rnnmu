@@ -148,34 +148,37 @@ def startFullMethodBRun(num_compositions):
 
 
 
-def startFullMethodARun(num_compositions, filename = "final_method_a_model"):
+def startFullMethodARun(num_compositions):
     # parameter dictionary
     params = {}
-    params["learning_rate"] = 0.000003
-    params["batch_size"] = 128
-    params["epochs"] = 20
+    params["learning_rate"] = 0.000002
+    params["batch_size"] = 64
+    params["epochs"] = 90
     params["dataset"] = "classical"
-    params["sequence_length"] = 10
+    params["sequence_length"] = 15
     params["data_amount"] = 1.0
+
     # get the filepaths and load for all .midi files in the dataset
     filepaths = getCleanedFilePaths(params["dataset"])
     # load appropriate amount of dataset in
     # limit the notes to the range c3 - c6 (3 full octaves)
     midi_data, key_distributions = loadMidiData(
-        filepaths[: int(len(filepaths) * params["data_amount"]) - 1], 48, 83)
+        filepaths[: int(len(filepaths) * params["data_amount"]) - 1], 36, 84
+    )
     # convert into python arrays andd dicts
     data, vectors, timeScalars = getKerasData(midi_data, key_distributions)
-    del midi_data  # no longer need original data, free the memory    
+    del midi_data  # no longer need original data, free the memory
     # convert to normalized form for network training
     processedData, processedLabels, tokens, token_cutoffs = processKerasDataMethodA(
         data, timeScalars, params["sequence_length"]
     )
-    del data  # no longer need unscaled data 
+    del data  # no longer need unscaled data
     # train / test split
-    trainX, testX, trainY, testY = genNormalizedNetworkData(processedData, processedLabels)
+    trainX, testX, trainY, testY = genTokenizedNetworkData(processedData, processedLabels, 0.25)
     del processedData
     del processedLabels
 
+    filename = "final_method_a_model"
     loaded_model = loadModel(filename + ".h5")
     # take some test data
     tempData = copy.deepcopy(testX)

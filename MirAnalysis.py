@@ -114,7 +114,7 @@ labels = {
     "Variation of Dynamics": 10,  # how much dynamics variation is there
     "Melodic Embellishments": 11,  # small melodic passages that slightly change or enhance a larger music phrase (complexity)
     "Repeated Notes": 12,  # number of notes that are repeated one after the other (indicator of low complexity)
-    "Melodic Pitch Variety"
+    "Melodic Pitch Variety" : 13
 }
 
 

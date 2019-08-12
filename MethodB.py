@@ -85,6 +85,3 @@ def runFullMethodBC1():
     
     del loaded_model
     del tempData
-
-
-runFullMethodBC1()
