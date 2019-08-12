@@ -22,8 +22,10 @@ def genRandomData(num_songs_to_compose):
     # using real values caused analysis software to crash
     minDuration = min(list(durations_occurences.keys()))
     maxDuration = 8
-    # cap offset and duration to 8 seconds 
-    minOffset = min(list(offsets_occurences.keys()))
+    
+    # cap offset and duration to be between 0 and 8 seconds 
+    # crashed MIR analysis and caused unfairly bad results
+    minOffset = 0
     maxOffset = 8
 
     minPitch = min(list(pitches_occurences.keys()))
@@ -31,6 +33,11 @@ def genRandomData(num_songs_to_compose):
 
     minVelocity = min(list(velocities_occurences.keys()))
     maxVelocity = max(list(velocities_occurences.keys()))
+    
+    print("Min Pitch = %d, Max Pitch = %d" % (minPitch, maxPitch))
+    print("Min Velocity = %d, Max Velocity = %d" % (minVelocity, maxVelocity))
+    print("Min Duration = %d, Max Duration = %d" % (minDuration, maxDuration))
+    print("Min Offset = %d, Max Offset = %d" % (minOffset, maxOffset))
 
 
     for i in range(num_songs_to_compose):

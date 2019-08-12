@@ -1,9 +1,14 @@
 from DataAnalysisHelpers import *
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import matplotlib.dates as dates
+import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib import rcParams
 import statistics
+from DataGen import *
+import pandas as pd
+
 
 def getFeatures(data):
     # make the data workable and not xml
@@ -51,14 +56,110 @@ def aggregateData(formatted_data, labels):
     aggregated_data = [x / len(formatted_data) for x in aggregated_data]
     return(aggregated_data)
 
+def plotOverallDifferenceComparison(organised_data):
+    means = {}
+    stds = {} 
 
+    for feature, values in organised_data.items():
+        dat = organised_data[feature]
+        plot_dat = {}
+        for dk, dv in dat.items():
+            plot_dat[dk] = {}
+            numbers = [dv[key] for key in dv]
+            d_std = statistics.stdev(numbers)
+            d_mean = statistics.mean(numbers)
+            d_max = max(numbers)
+            d_min = min(numbers)
+            plot_dat[dk]["std"] = remap(d_std, d_min, d_max, 0, 1)
+            plot_dat[dk]["mean"] = remap(d_mean, d_min, d_max, 0, 1)
+        
+        means[feature] = []
+        stds[feature] = []
+        # Human vs Method A
+        means[feature].append(abs(plot_dat["dataset"]["mean"] - plot_dat["methodA"]["mean"]))
+        stds[feature].append(abs(plot_dat["dataset"]["std"] - plot_dat["methodA"]["std"]))
+        # Human vs Method B
+        means[feature].append(abs(plot_dat["dataset"]["mean"] - plot_dat["methodB"]["mean"]))
+        stds[feature].append(abs(plot_dat["dataset"]["std"] - plot_dat["methodB"]["std"]))
+        # Human vs Random
+        means[feature].append(abs(plot_dat["dataset"]["mean"] - plot_dat["random"]["mean"]))
+        stds[feature].append(abs(plot_dat["dataset"]["std"] - plot_dat["random"]["std"]))
+
+
+    fig, ax = plt.subplots()
+    df = pd.DataFrame(means).T
+    df.plot(kind='bar', ax=ax)
+    ax.legend(["Method A", "Method B", "Random"]);
+    ax.set_xlabel("MIR Descriptor")
+    ax.set_ylabel("Mean % Difference from Human Compositions")
+    
+    plt.savefig("res/plots/overall_mean_difference.png")
+
+    fig, ax = plt.subplots()
+    df = pd.DataFrame(stds).T
+    df.plot(kind='bar', ax=ax)
+    ax.legend(["Method A", "Method B", "Random"]);
+    ax.set_xlabel("MIR Descriptor")
+    ax.set_ylabel("% Deviation from Human Compositions")
+
+    plt.savefig("res/plots/overall-deviation-difference.png")
+
+
+def plotFeatureAgainstHumanComparison(organised_data, feature):
+    dat = organised_data[feature]
+    plot_dat = {}
+    means = []
+    stds = [] 
+    
+    for dk, dv in dat.items():
+        plot_dat[dk] = {}
+        numbers = [dv[key] for key in dv]
+        d_std = statistics.stdev(numbers)
+        d_mean = statistics.mean(numbers)
+        plot_dat[dk]["std"] = d_std
+        plot_dat[dk]["mean"] = d_mean
+        
+    # Human vs Method A
+    means.append(abs(plot_dat["dataset"]["mean"] - plot_dat["methodA"]["mean"]))
+    stds.append(abs(plot_dat["dataset"]["std"] - plot_dat["methodA"]["std"]))
+    # Human vs Method B
+    means.append(abs(plot_dat["dataset"]["mean"] - plot_dat["methodB"]["mean"]))
+    stds.append(abs(plot_dat["dataset"]["std"] - plot_dat["methodB"]["std"]))
+    # Human vs Method A
+    means.append(abs(plot_dat["dataset"]["mean"] - plot_dat["random"]["mean"]))
+    stds.append(abs(plot_dat["dataset"]["std"] - plot_dat["random"]["std"]))
+    
+    l = ["Method A", "Method B", "Random"]
+    fig, ax = plt.subplots()
+    index = np.arange(len(l))
+    bar_width = 0.5
+    opacity = 0.8
+    
+    ax.yaxis.grid(True)
+        
+    plt.title("Mean %s absolute difference from human composition" % feature)
+    plt.xticks(index, l)
+    plt.ylabel("Descriptor Value")
+    plt.xlabel("\nComposition Type")
+    
+    rects = plt.bar(index, means, bar_width,
+    alpha=opacity,
+    color='#FC6600',
+    label='Dataset',
+    align="center",
+    yerr=stds,
+    capsize=6,
+    ecolor="black")
+
+    plt.savefig("res/plots/%s-absolute-difference" % feature)
+    
+    
 
 def plotFeatureComparison(organised_data, feature):
 
     # import statistics
     # numbers = [G[key] for key in G]
     # mean_ = statistics.mean(numbers)
-    
     dat = organised_data[feature]
     plot_dat = {}
     means = []
@@ -81,7 +182,7 @@ def plotFeatureComparison(organised_data, feature):
 
     ax.yaxis.grid(True)
     
-    plt.title("%s comparison" % feature)
+    plt.title("Mean %s comparison" % feature)
     plt.xticks(np.arange(len(dat)), dat.keys())
     plt.ylabel("Descriptor Value")
     plt.xlabel("\nComposition Type")
@@ -94,8 +195,10 @@ def plotFeatureComparison(organised_data, feature):
     yerr=stds,
     capsize=6,
     ecolor="black")
+    
+    plt.savefig("res/plots/%s-overall-comparison" % feature)
+    
     plt.show()
-
     return plot_dat
     
     
@@ -118,10 +221,10 @@ labels = {
 }
 
 
-training_analysis_filepath = "res/analysis_data/dataset_analysis.xml"
-methodA_analysis_filepath = "res/analysis_data/generated_analysis.xml" 
-methodB_analysis_filepath = "res/analysis_data/generated_analysis.xml" 
-random_analysis_filepath = "res/analysis_data/random_analysis.xml" # random_analysis.xml
+training_analysis_filepath = "res/analysis_data/human.xml"
+methodA_analysis_filepath = "res/analysis_data/method_a.xml" 
+methodB_analysis_filepath = "res/analysis_data/method_b.xml" 
+random_analysis_filepath = "res/analysis_data/random.xml" # random_analysis.xml
 
 dataset_raw = parseAnalysisData(training_analysis_filepath)
 dataset_data = deepcopy(dataset_raw["feature_vector_file"]["data_set"])
@@ -179,8 +282,13 @@ del random_final_data
 del methodA_final_data
 del methodB_final_data
 
+# perform the plots
+
+plotOverallDifferenceComparison(organised_data)
 
 for k, v in labels.items():
-    x = plotFeatureComparison(organised_data, k)
+   x = plotFeatureComparison(organised_data, k)
+   y = plotFeatureAgainstHumanComparison(organised_data, k)
+
 
 
