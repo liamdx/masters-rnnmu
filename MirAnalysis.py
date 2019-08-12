@@ -101,8 +101,10 @@ def plotOverallDifferenceComparison(organised_data):
     ax.legend(["Method A", "Method B", "Random"]);
     ax.set_xlabel("MIR Descriptor")
     ax.set_ylabel("% Deviation from Human Compositions")
+    
+    # plt.tight_layout()
 
-    plt.savefig("res/plots/overall-deviation-difference.png")
+    plt.savefig("res/plots/overall-deviation-difference.png", bbox_inches="tight")
 
 
 def plotFeatureAgainstHumanComparison(organised_data, feature):
@@ -150,8 +152,10 @@ def plotFeatureAgainstHumanComparison(organised_data, feature):
     yerr=stds,
     capsize=6,
     ecolor="black")
+    
+    # plt.tight_layout()
 
-    plt.savefig("res/plots/%s-absolute-difference" % feature)
+    plt.savefig("res/plots/%s-absolute-difference" % feature, bbox_inches="tight")
     
     
 
@@ -196,7 +200,9 @@ def plotFeatureComparison(organised_data, feature):
     capsize=6,
     ecolor="black")
     
-    plt.savefig("res/plots/%s-overall-comparison" % feature)
+    # plt.tight_layout()
+
+    plt.savefig("res/plots/%s-overall-comparison" % feature, bbox_inches="tight")
     
     plt.show()
     return plot_dat
